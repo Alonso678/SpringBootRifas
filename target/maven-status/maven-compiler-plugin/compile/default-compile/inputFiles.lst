@@ -1,0 +1,12 @@
+/home/alonso-ortiz/Documentos/Rifas_SpringBoot/rifas-publicas-project/src/main/java/com/rifas/publicas/RifasPublicasApplication.java
+/home/alonso-ortiz/Documentos/Rifas_SpringBoot/rifas-publicas-project/src/main/java/com/rifas/publicas/SecurityConfig.java
+/home/alonso-ortiz/Documentos/Rifas_SpringBoot/rifas-publicas-project/src/main/java/com/rifas/publicas/controller/MainController.java
+/home/alonso-ortiz/Documentos/Rifas_SpringBoot/rifas-publicas-project/src/main/java/com/rifas/publicas/model/Boleto.java
+/home/alonso-ortiz/Documentos/Rifas_SpringBoot/rifas-publicas-project/src/main/java/com/rifas/publicas/model/Compra.java
+/home/alonso-ortiz/Documentos/Rifas_SpringBoot/rifas-publicas-project/src/main/java/com/rifas/publicas/model/Rifa.java
+/home/alonso-ortiz/Documentos/Rifas_SpringBoot/rifas-publicas-project/src/main/java/com/rifas/publicas/model/Usuario.java
+/home/alonso-ortiz/Documentos/Rifas_SpringBoot/rifas-publicas-project/src/main/java/com/rifas/publicas/repository/BoletoRepository.java
+/home/alonso-ortiz/Documentos/Rifas_SpringBoot/rifas-publicas-project/src/main/java/com/rifas/publicas/repository/CompraRepository.java
+/home/alonso-ortiz/Documentos/Rifas_SpringBoot/rifas-publicas-project/src/main/java/com/rifas/publicas/repository/RifaRepository.java
+/home/alonso-ortiz/Documentos/Rifas_SpringBoot/rifas-publicas-project/src/main/java/com/rifas/publicas/repository/UsuarioRepository.java
+/home/alonso-ortiz/Documentos/Rifas_SpringBoot/rifas-publicas-project/src/main/java/com/rifas/publicas/service/UserDetailsServiceImpl.java
