@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html}"></html>
 <head>
     <meta charset="UTF-8">
     <title>Registro - Sorteos y Rifas</title>
@@ -47,6 +47,46 @@
             background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
             box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
             color: #000;
+        }
+
+        /* Tarjeta principal con tono gris claro translúcido y bordes muy definidos */
+        .card, .form-container {
+        background: rgba(203, 213, 225, 0.85); /* Gris claro translúcido */
+        backdrop-filter: blur(16px);          /* Efecto de cristal esmerilado */
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.4); /* Borde claro y bien definido */
+        border-radius: 1.5rem;               /* Esquinas redondeadas prominentes */
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); /* Sombra profunda para que flote */
+        color: #0f172a !important;            /* Texto interno oscuro para máxima legibilidad */
+        }
+
+        /* Textos dentro de la tarjeta clara */
+        .card h3, .card h4, .card h5, .card p, .card label, .card .form-label {
+        color: #1e293b !important;
+        }
+
+        /* Campos de entrada (inputs) claros y bien definidos */
+        .form-control, .input-group-text {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid rgba(148, 163, 184, 0.8) !important;
+        color: #0f172a !important;
+        border-radius: 0.5rem !important;
+        }
+
+        .form-control::placeholder {
+        color: #64748b !important;
+        }
+
+        .form-control:focus {
+        background: #ffffff !important;
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+        }
+
+        /* Iconos dentro de los inputs */
+        .input-group-text {
+        background: rgba(226, 232, 240, 0.9) !important;
+        color: #475569 !important;
         }
     </style>
 </head>
