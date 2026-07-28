@@ -152,7 +152,8 @@
         
                     <!-- Imagen dinámica de cada rifa -->
                     <div class="text-center p-3 bg-black bg-opacity-25">
-                        <img th:src="@{/img/Iphone-14-PNG.png}" alt="Premio de la Rifa">
+                        <img th:src="${rifa.imagenUrl}" alt="Premio de la Rifa" class="img-fluid"
+                            style="max-height: 180px; object-fit: contain;">
                     </div>
         
                     <div class="card-body d-flex flex-column">
