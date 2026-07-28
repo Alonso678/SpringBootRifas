@@ -16,7 +16,9 @@ CREATE TABLE IF NOT EXISTS rifas (
     precio_boleto NUMERIC(10, 2) NOT NULL,
     total_boletos INT NOT NULL,
     fecha_sorteo TIMESTAMP NOT NULL,
-    estado VARCHAR(20) NOT NULL
+    estado VARCHAR(20) NOT NULL,
+    imagen_url VARCHAR(255),
+    video_url VARCHAR(500)
 );
 
 -- Crear tabla de boletos
@@ -51,8 +53,8 @@ CREATE TABLE IF NOT EXISTS compra_boletos (
     CONSTRAINT fk_cb_boleto FOREIGN KEY (boleto_id) REFERENCES boletos(id)
 );
 
--- Insertar un usuario Administrador por defecto (Contraseña: admin123 codificada en BCrypt)
--- Email: admin@rifas.com / Password: admin123
+-- Insertar un usuario Administrador por admin123defecto (Contraseña: admin123 codificada en BCrypt)
+-- Email: admin@rifas.com / Password: 
 INSERT INTO usuarios (email, password, nombre, telefono, rol)
-VALUES ('admin@rifas.com', '$2a$10$8.UnDzH8u7pWz3t35Kz/o.709i5mJdGZvjK0y98f8nZl9p7uF3L.K', 'Administrador General', '5555555555', 'ROLE_ADMIN')
+VALUES ('admin@rifas.com', '$2a$10$pz9R/5hvIBCg3f6FNlu/3eZTDkV6Tyd7MzM1i/neNpWVoa6P430CO', 'Administrador General', '5555555555', 'ROLE_ADMIN')
 ON CONFLICT (email) DO NOTHING;

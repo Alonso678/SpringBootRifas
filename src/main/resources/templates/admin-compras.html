@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html}"></html>
 <head>
     <meta charset="UTF-8">
     <title>Validación de Compras</title>
@@ -8,6 +8,22 @@
 <body class="bg-light">
     <div class="container mt-4">
         <a href="/admin/rifas" class="btn btn-secondary mb-3">← Volver a Admin Rifas</a>
+        <!-- Formulario de búsqueda avanzada -->
+        <form th:action="@{/admin/compras}" method="get" class="row g-3 mb-4">
+            <div class="col-md-9">
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-warning"><i
+                            class="fa-solid fa-search"></i></span>
+                    <input type="text" name="filtro" class="form-control bg-dark text-light border-secondary"
+                        placeholder="Buscar por usuario (nombre/correo), número de boleto o estatus (ej. PENDIENTE, PAGADO)..."
+                        th:value="${filtroActual}">
+                </div>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-warning fw-bold flex-grow-1">Buscar</button>
+                <a th:href="@{/admin/compras}" class="btn btn-outline-secondary">Limpiar</a>
+            </div>
+        </form>
         <h2>Gestión y Validación de Pagos</h2>
         <table class="table table-striped shadow-sm bg-white rounded mt-3">
             <thead>
@@ -35,9 +51,11 @@
                     </td>
                     <td>
                         <form th:action="@{/admin/compras/validar/{id}(id=${c.id})}" method="post" class="d-inline">
-                            <input type="hidden" name="estado" value="PAGADO">
-                            <button type="submit" class="btn btn-success btn-sm">Marcar Pagado</button>
-                        </form>
+                            <input type="hidden" name="estado" value="PAGADO" />
+                            <button type="submit" class="btn btn-success btn-sm fw-bold">
+                                <i class="fa-solid fa-check me-1"></i> Aprobar Pago
+                            </button>
+                        </form>              
                         <form th:action="@{/admin/compras/validar/{id}(id=${c.id})}" method="post" class="d-inline">
                             <input type="hidden" name="estado" value="RECHAZADO">
                             <button type="submit" class="btn btn-danger btn-sm">Rechazar</button>

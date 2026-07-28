@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"></html>
 <head>
     <meta charset="UTF-8">
     <title>Mis Compras - Sorteos y Rifas</title>
@@ -51,7 +51,7 @@
     </style>
 </head>
 <body>
-    <div class="container py-5">
+    <div th:fragment="content" class="container py-5">
         <a href="/" class="btn btn-gold-outline mb-4 rounded-pill px-4 btn-sm fw-semibold"><i class="fa-solid fa-arrow-left me-2"></i>Volver al Inicio</a>
         
         <div class="content-card p-4 p-md-5">
@@ -79,7 +79,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="c : ${compras}">
+                        <tr th:each="c : ${compras}" th:if="${c != null}">
                             <td class="fw-bold text-warning" th:text="'#' + ${c.id}">1</td>
                             <td class="fw-semibold text-white" th:text="${c.rifa.titulo}">Rifa</td>
                             <td>
@@ -92,6 +92,31 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            <!-- Panel de pago global para compras pendientes -->
+            <div class="mt-4 p-4 rounded-3 border border-warning border-opacity-25 bg-dark" th:if="${tienePendientes}">
+                <div class="row align-items-center">
+                    <div class="col-lg-6 mb-3 mb-lg-0">
+                        <h5 class="text-white fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Tienes pagos pendientes</h5>
+                        <p class="text-muted small mb-3">Puedes realizar una sola transferencia por el total acumulado de tus compras pendientes a la siguiente cuenta:</p>
+                        
+                        <!-- Datos Bancarios -->
+                        <div class="bg-black bg-opacity-50 p-3 rounded border border-secondary border-opacity-50 small text-light">
+                            <div class="mb-1"><strong>Banco:</strong> BBVA / Santander / etc.</div>
+                            <div class="mb-1"><strong>CLABE Interbancaria:</strong> <span class="text-warning font-monospace">123456789012345678</span></div>
+                            <div class="mb-1"><strong>Titular:</strong> Nombre del Titular</div>
+                            <div><strong>Concepto:</strong> Pago Global Rifas</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6 text-lg-end mt-3 mt-lg-0">
+                        <div class="text-success fw-bold fs-4 mb-2" th:text="'Total a pagar: $' + ${totalPendiente}">$0.00</div>
+                        <a th:href="@{https://wa.me/527721340342?text={msg}(msg=${'Hola Admin, envío mi comprobante de pago por el total acumulado de mis compras pendientes, por un monto de $' + totalPendiente + ' MXN.'})}"
+                            target="_blank" class="btn btn-success fw-bold px-4 py-2">
+                            <i class="fa-brands fa-whatsapp me-2"></i> Enviar comprobante por WhatsApp
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

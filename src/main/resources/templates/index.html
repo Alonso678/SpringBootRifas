@@ -1,36 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html}"></html>
 <head>
     <meta charset="UTF-8">
     <title>Sorteos y Rifas en Vivo</title>
     <link th:href="@{/css/bootstrap.min.css}" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            background-color: #0b0f19;
-            color: #f8fafc;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        /* Canvas de fondo animado con monedas y destellos estelares */
-        #bg-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        .navbar {
-            background: rgba(11, 15, 25, 0.95) !important;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 215, 0, 0.15);
-        }
-
         .hero-banner {
             background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 50%, #311026 100%);
             border: 1px solid rgba(255, 215, 0, 0.2);
@@ -72,24 +47,7 @@
             box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
         }
 
-        .btn-gold {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: #000;
-            font-weight: 700;
-            border: none;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-gold:hover {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
-            color: #000;
-            transform: scale(1.02);
-        }
-
-        /* Estilos del Pop-up con rebote y sin fondo blanco */
+        /* Estilos del Pop-up exclusivo del Index */
         #popup-banner {
             position: fixed;
             left: 50px;
@@ -131,19 +89,19 @@
         .col-md-4:nth-child(3) .card-sorteo { animation-delay: 0.3s; }
 
         .fa-trophy {
-        animation: trophyPulse 2s ease-in-out infinite;
+            animation: trophyPulse 2s ease-in-out infinite;
         }
 
         @keyframes trophyPulse {
-        0%, 100% {
-        transform: scale(1);
-        filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.4));
+            0%, 100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.4));
+            }
+            50% {
+                transform: scale(1.15);
+                filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.9));
+            }
         }
-        50% {
-        transform: scale(1.15);
-        filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.9));
-        }
-}
     </style>
 </head>
 <body>
@@ -151,7 +109,7 @@
     <canvas id="bg-canvas"></canvas>
 
     <!-- Pop-up Flotante con Rebote -->
-    <a href="/registro" id="popup-banner">
+    <a href="/registro" id="popup-banner" th:unless="${#authorization.expression('hasRole(''ADMIN'')')}">
         <img src="/assets/entra-para-ganar.png" th:src="@{/assets/entra-para-ganar.png}" alt="Entra para ganar">
     </a>
 
@@ -185,184 +143,75 @@
             <h2 class="fw-bold m-0 text-white"><i class="fa-solid fa-trophy text-warning me-2"></i>Sorteos Disponibles</h2>
         </div>
         
+        <!-- Contenedor que lista las rifas -->
         <div class="row">
+            <!-- El th:each recorre la lista 'rifas' enviada desde el controlador -->
             <div class="col-md-4 mb-4" th:each="rifa : ${rifas}">
-                <div class="card card-sorteo h-100 text-white">
-                    <div class="card-body d-flex flex-column p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="card-title fw-bold text-white mb-0" th:text="${rifa.titulo}">Título</h5>
-                            <span class="badge bg-success bg-opacity-20 text-success border border-success">En Juego</span>
+                <div class="card bg-dark text-white border-secondary shadow-lg h-100"
+                    style="border-radius: 15px; overflow: hidden;">
+        
+                    <!-- Imagen dinámica de cada rifa -->
+                    <div class="text-center p-3 bg-black bg-opacity-25">
+                        <img th:src="${rifa.imagenUrl}" alt="Premio de la Rifa" class="img-fluid"
+                            style="max-height: 180px; object-fit: contain;">
+                    </div>
+        
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold text-warning" th:text="${rifa.titulo}">Título de la Rifa</h5>
+        
+                        <!-- Descripción -->
+                        <p class="card-text text-light small flex-grow-1" style="line-height: 1.4; opacity: 0.9;"
+                            th:text="${rifa.descripcion}">
+                            Descripción de la rifa...
+                        </p>
+        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="fs-5 fw-bold text-success" th:text="${'$' + rifa.precioBoleto + ' MXN'}">$0.00</span>
+                            <a th:href="@{/rifas/{id}(id=${rifa.id})}" class="btn btn-warning fw-bold btn-sm">PARTICIPAR AHORA</a>
                         </div>
-                        <p class="card-text text-muted small flex-grow-1" th:text="${rifa.descripcion}">Descripción</p>
-                        
-                        <div class="bg-dark p-3 rounded-3 mb-3 border border-secondary border-opacity-25">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted small">Precio por boleto</span>
-                                <span class="fs-4 fw-bold text-warning">$<span th:text="${rifa.precioBoleto}">0.00</span></span>
-                            </div>
-                        </div>
-
-                        <p class="small text-muted mb-3"><i class="fa-regular fa-calendar-days text-warning me-1"></i>Sorteo: <span th:text="${rifa.fechaSorteo}" class="text-white">Fecha</span></p>
-                        
-                        <a th:href="@{/rifas/{id}(id=${rifa.id})}" class="btn btn-gold w-100 py-2 rounded-pill text-uppercase fw-bold"><i class="fa-solid fa-ticket-simple me-2"></i>Participar Ahora</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Script de Monedas con Destellos Estelares y Rebote -->
+    <!-- Script exclusivo de Rebote del Pop-up para el Index -->
     <script>
-        const cv = document.getElementById('bg-canvas');
-        const x = cv.getContext('2d');
-        let w, h, parts = [], coins = [];
-
-        function rs() {
-            w = cv.width = window.innerWidth;
-            h = cv.height = window.innerHeight;
-        }
-        window.addEventListener('resize', rs);
-        rs();
-
-        // Función para dibujar un destello de estrella de 4 puntas
-        function drawStarSparkle(ctx, cx, cy, outerRadius, innerRadius) {
-            let rot = Math.PI / 2 * 3;
-            let step = Math.PI / 4;
-            ctx.beginPath();
-            ctx.moveTo(cx, cy - outerRadius);
-            for (let i = 0; i < 4; i++) {
-                let x = cx + Math.cos(rot) * outerRadius;
-                let y = cy + Math.sin(rot) * outerRadius;
-                ctx.lineTo(x, y);
-                rot += step;
-
-                x = cx + Math.cos(rot) * innerRadius;
-                y = cy + Math.sin(rot) * innerRadius;
-                ctx.lineTo(x, y);
-                rot += step;
-            }
-            ctx.closePath();
-            ctx.fill();
-        }
-
-        // Partículas sutiles de fondo
-        for(let i = 0; i < 80; i++) {
-            parts.push({
-                x: Math.random() * w,
-                y: Math.random() * h,
-                v: (Math.random() * 0.4 + 0.1),
-                r: Math.random() * 1.5 + 0.5
-            });
-        }
-
-        function spawnCoin() {
-            coins.push({
-                x: Math.random() * w,
-                y: -40,
-                v: 1.8 + Math.random() * 2,
-                s: 14 + Math.random() * 6,
-                a: Math.random() * Math.PI,
-                spinSpeed: 0.04 + Math.random() * 0.04,
-                sparkleAlpha: Math.random() * Math.PI, // Controla el parpadeo del destello en la moneda
-                sparkleOffset: { x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8 }
-            });
-        }
-        setInterval(spawnCoin, 550);
-
-        function frame() {
-            x.fillStyle = "#0b0f19";
-            x.fillRect(0, 0, w, h);
-
-            // Fondo de partículas
-            for(let p of parts) {
-                p.y += p.v;
-                if(p.y > h) p.y = 0;
-                x.beginPath();
-                x.fillStyle = "rgba(255, 215, 0, 0.3)";
-                x.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                x.fill();
-            }
-
-            // Monedas con destello de estrella brillante sobre ellas
-            for(let i = coins.length - 1; i >= 0; i--) {
-                let c = coins[i];
-                c.y += c.v;
-                c.a += c.spinSpeed;
-                c.sparkleAlpha += 0.08; // Velocidad con la que parpadea el destello de estrella
-
-                x.save();
-                x.translate(c.x, c.y);
-                x.rotate(c.a);
-
-                // Sombra de brillo para la moneda
-                x.shadowColor = "#f59e0b";
-                x.shadowBlur = 12;
-
-                // Dibujar cuerpo de la moneda
-                x.fillStyle = "#fbbf24";
-                x.beginPath();
-                x.ellipse(0, 0, c.s * 0.6, c.s, 0, 0, Math.PI * 2);
-                x.fill();
-
-                x.strokeStyle = "#fff";
-                x.lineWidth = 1.5;
-                x.stroke();
-
-                // Destello de estrella brillando de forma intermitente sobre la moneda
-                let twinkle = Math.abs(Math.sin(c.sparkleAlpha));
-                if (twinkle > 0.3) { // Aparece y desaparece dinámicamente como un haz estelar
-                    x.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
-                    x.shadowColor = "#ffffff";
-                    x.shadowBlur = 15;
-                    drawStarSparkle(x, c.sparkleOffset.x, c.sparkleOffset.y, 6, 2);
-                }
-
-                x.restore();
-
-                if(c.y > h + 40) {
-                    coins.splice(i, 1);
-                }
-            }
-
-            x.shadowBlur = 0;
-            requestAnimationFrame(frame);
-        }
-        frame();
-
-        // Lógica de Rebote de Pelota para el Pop-up
         const pop = document.getElementById('popup-banner');
-        let posX = Math.random() * (window.innerWidth - 300);
-        let posY = Math.random() * (window.innerHeight - 200);
-        let velX = 2.2;
-        let velY = 1.8;
-        let isPaused = false;
+        if (pop) {
+            let posX = Math.random() * (window.innerWidth - 300);
+            let posY = Math.random() * (window.innerHeight - 200);
+            let velX = 2.2;
+            let velY = 1.8;
+            let isPaused = false;
 
-        pop.addEventListener('mouseenter', () => { isPaused = true; });
-        pop.addEventListener('mouseleave', () => { isPaused = false; });
+            pop.addEventListener('mouseenter', () => { isPaused = true; });
+            pop.addEventListener('mouseleave', () => { isPaused = false; });
 
-        function bouncePopup() {
-            if (!isPaused) {
-                posX += velX;
-                posY += velY;
+            function bouncePopup() {
+                if (!isPaused) {
+                    posX += velX;
+                    posY += velY;
 
-                const maxX = window.innerWidth - pop.offsetWidth;
-                const maxY = window.innerHeight - pop.offsetHeight;
+                    const maxX = window.innerWidth - pop.offsetWidth;
+                    const maxY = window.innerHeight - pop.offsetHeight;
 
-                if (posX <= 0 || posX >= maxX) {
-                    velX *= -1;
-                    posX = Math.max(0, Math.min(posX, maxX));
+                    if (posX <= 0 || posX >= maxX) {
+                        velX *= -1;
+                        posX = Math.max(0, Math.min(posX, maxX));
+                    }
+                    if (posY <= 0 || posY >= maxY) {
+                        velY *= -1;
+                        posY = Math.max(0, Math.min(posY, maxY));
+                    }
+
+                    pop.style.left = posX + 'px';
+                    pop.style.top = posY + 'px';
                 }
-                if (posY <= 0 || posY >= maxY) {
-                    velY *= -1;
-                    posY = Math.max(0, Math.min(posY, maxY));
-                }
-
-                pop.style.left = posX + 'px';
-                pop.style.top = posY + 'px';
+                requestAnimationFrame(bouncePopup);
             }
             requestAnimationFrame(bouncePopup);
         }
-        requestAnimationFrame(bouncePopup);
     </script>
 </body>
 </html>
