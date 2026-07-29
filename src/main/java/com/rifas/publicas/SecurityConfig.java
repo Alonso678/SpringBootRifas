@@ -27,7 +27,8 @@ public class SecurityConfig {
                 .permitAll()
             )
             .logout(logout -> logout
-                .logoutSuccessUrl("/login?logout=true")
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/") // Deberia redirigir al index
                 .permitAll()
             );
         return http.build();
