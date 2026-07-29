@@ -37,7 +37,8 @@ public class MainController {
 
     @GetMapping("/")
     public String index(Model model) {
-        model.addAttribute("rifas", rifaRepository.findAll());
+        // Solo carga las rifas con estado "ACTIVA"
+        model.addAttribute("rifas", rifaRepository.findByEstado("ACTIVA"));
         return "index";
     }
 
@@ -123,13 +124,11 @@ public class MainController {
         Usuario usuario = usuarioRepository.findByEmail(principal.getName()).orElseThrow();
         List<Compra> compras = compraRepository.findByUsuarioId(usuario.getId());
 
-        // Calcular la suma total de los montos de las compras que están pendientes
         BigDecimal totalPendiente = compras.stream()
                 .filter(c -> c != null && "PENDIENTE".equals(c.getEstadoPago()) && c.getMontoTotal() != null)
                 .map(c -> c.getMontoTotal())
                 .reduce(BigDecimal.ZERO, (acumulado, actual) -> acumulado.add(actual));
 
-        // Evaluar directamente en Java si hay montos pendientes mayores a cero
         boolean tienePendientes = totalPendiente.compareTo(BigDecimal.ZERO) > 0;
 
         model.addAttribute("compras", compras);
@@ -141,25 +140,99 @@ public class MainController {
 
     @GetMapping("/admin/rifas")
     public String adminRifas(Model model) {
+        // findAll() recupera todas las rifas sin importar su estado
         model.addAttribute("rifas", rifaRepository.findAll());
         model.addAttribute("nuevaRifa", new Rifa());
         return "admin-rifas";
     }
 
+    @GetMapping("/admin/rifas/nuevo")
+    public String formularioCrear(Model model) {
+        model.addAttribute("rifa", new Rifa());
+        return "admin/form";
+    }
+
+    @GetMapping("/admin/rifas/editar/{id}")
+    public String formularioEditar(@PathVariable("id") Long id, Model model) {
+        Rifa rifa = rifaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
+        model.addAttribute("rifa", rifa);
+        return "admin/form";
+    }
+
     @PostMapping("/admin/rifas/guardar")
     public String guardarRifa(@ModelAttribute Rifa rifa) {
-        rifa.setEstado("ACTIVA");
-        Rifa guardada = rifaRepository.save(rifa);
-        
-        // Generar boletos automáticamente
-        for (int i = 1; i <= rifa.getTotalBoletos(); i++) {
-            Boleto b = new Boleto();
-            b.setNumeroBoleto(i);
-            b.setRifa(guardada);
-            b.setEstado("DISPONIBLE");
-            boletoRepository.save(b);
+        if (rifa.getId() == null) {
+            if (rifa.getEstado() == null || rifa.getEstado().isEmpty()) {
+                rifa.setEstado("ACTIVA");
+            }
+            Rifa guardada = rifaRepository.save(rifa);
+            
+            for (int i = 1; i <= rifa.getTotalBoletos(); i++) {
+                Boleto b = new Boleto();
+                b.setNumeroBoleto(i);
+                b.setRifa(guardada);
+                b.setEstado("DISPONIBLE");
+                boletoRepository.save(b);
+            }
+        } else {
+            // Recuperamos la rifa de la base de datos para no perder propiedades obligatorias (como fechaSorteo)
+            Rifa existente = rifaRepository.findById(rifa.getId())
+                    .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
+            
+            existente.setTitulo(rifa.getTitulo());
+            existente.setDescripcion(rifa.getDescripcion());
+            existente.setPrecioBoleto(rifa.getPrecioBoleto());
+            existente.setTotalBoletos(rifa.getTotalBoletos());
+            existente.setImagenUrl(rifa.getImagenUrl());
+            if (rifa.getEstado() != null && !rifa.getEstado().isEmpty()) {
+                existente.setEstado(rifa.getEstado());
+            }
+            
+            rifaRepository.save(existente);
         }
+        
         return "redirect:/admin/rifas";
+    }
+
+    // @PostMapping("/admin/rifas/guardar")
+    // public String guardarRifa(@ModelAttribute Rifa rifa) {
+    //     if (rifa.getId() == null) {
+    //         if (rifa.getEstado() == null || rifa.getEstado().isEmpty()) {
+    //             rifa.setEstado("ACTIVA");
+    //         }
+    //         Rifa guardada = rifaRepository.save(rifa);
+            
+    //         for (int i = 1; i <= rifa.getTotalBoletos(); i++) {
+    //             Boleto b = new Boleto();
+    //             b.setNumeroBoleto(i);
+    //             b.setRifa(guardada);
+    //             b.setEstado("DISPONIBLE");
+    //             boletoRepository.save(b);
+    //         }
+    //     } else {
+    //         Rifa existente = rifaRepository.findById(rifa.getId())
+    //                 .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
+    //         rifa.setEstado(existente.getEstado());
+    //         rifaRepository.save(rifa);
+    //     }
+        
+    //     return "redirect:/";
+    // }
+
+    @PostMapping("/admin/rifas/estatus/{id}")
+    public String cambiarEstatus(@PathVariable("id") Long id) {
+        Rifa rifa = rifaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
+        rifa.setEstado("ACTIVA".equals(rifa.getEstado()) ? "FINALIZADA" : "ACTIVA");
+        rifaRepository.save(rifa);
+        return "redirect:/";
+    }
+
+    @GetMapping("/admin/rifas/eliminar/{id}")
+    public String eliminarRifa(@PathVariable("id") Long id) {
+        rifaRepository.deleteById(id);
+        return "redirect:/";
     }
     
     @GetMapping("/admin/compras")
@@ -189,12 +262,6 @@ public class MainController {
         model.addAttribute("filtroActual", filtro);
         return "admin-compras";
     }
-
-    // @GetMapping("/admin/compras")
-    // public String adminCompras(Model model) {
-    //     model.addAttribute("compras", compraRepository.findAll());
-    //     return "admin-compras";
-    // }
 
     @PostMapping("/admin/compras/validar/{id}")
     public String validarPago(@PathVariable("id") @NonNull Long compraId, @RequestParam("estado") String estado) {

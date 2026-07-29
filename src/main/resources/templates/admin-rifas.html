@@ -112,6 +112,79 @@
             </div>
         </div>
 
+        <!-- Sección de Listado de Rifas Existentes para Gestión -->
+        <div class="mt-5 pt-4 border-top border-secondary">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="text-white fw-bold">Rifas Registradas</h3>
+            </div>
+        
+            <div class="card bg-dark border-secondary shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0">
+                            <thead class="table-secondary text-dark">
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Precio</th>
+                                    <th>Total Boletos</th>
+                                    <th>Sorteo</th>
+                                    <th>Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Iteramos sobre la lista de rifas que viene del controlador admin -->
+                                <tr th:each="rifa : ${rifas}">
+                                    <td class="fw-bold text-warning" th:text="${rifa.titulo}">Título de la Rifa</td>
+                                    <td th:text="${'$' + rifa.precioBoleto}">$0.00</td>
+                                    <td th:text="${rifa.totalBoletos}">0</td>
+                                    <td th:text="${#temporals.format(rifa.fechaSorteo, 'dd/MM/yyyy HH:mm')}">Fecha</td>
+                                    <td>
+                                        <!-- Indicador visual del estatus -->
+                                        <span th:text="${rifa.estado}"
+                                            th:class="${rifa.estado == 'ACTIVA'} ? 'badge bg-success' : 'badge bg-secondary'">
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <!-- Botón Editar -->
+                                            <a th:href="@{/admin/rifas/editar/{id}(id=${rifa.id})}" class="btn btn-warning"
+                                                title="Editar">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </a>
+        
+                                            <!-- Botón Cambiar Estatus (Activar / Desactivar) -->
+                                            <form th:action="@{/admin/rifas/estatus/{id}(id=${rifa.id})}" method="post"
+                                                class="d-inline">
+                                                <button type="submit"
+                                                    th:class="${rifa.estado == 'ACTIVA'} ? 'btn btn-secondary' : 'btn btn-success'"
+                                                    th:title="${rifa.estado == 'ACTIVA'} ? 'Desactivar' : 'Activar'">
+                                                    <i
+                                                        th:class="${rifa.estado == 'ACTIVA'} ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                                                </button>
+                                            </form>
+        
+                                            <!-- Botón Eliminar -->
+                                            <a th:href="@{/admin/rifas/eliminar/{id}(id=${rifa.id})}" class="btn btn-danger"
+                                                title="Eliminar"
+                                                onclick="return confirm('¿Estás seguro de eliminar esta rifa? Se borrarán sus datos asociados.');">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- Mensaje si no hay rifas -->
+                                <tr th:if="${#lists.isEmpty(rifas)}">
+                                    <td colspan="6" class="text-center text-muted py-4">No hay rifas registradas en el sistema.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Formulario oculto que se despliega al hacer clic -->
         <div class="collapse mt-5" id="formCrearRifa">
             <div class="card shadow-lg bg-dark border-secondary p-4 p-md-5">
