@@ -29,4 +29,16 @@ public class Usuario {
 
     @Column(nullable = false, length = 30)
     private String rol; // ROLE_USER, ROLE_ADMIN
+
+    @Column(name = "token")
+    private String token;
+
+    // Getters y Setters
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
 }
