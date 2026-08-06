@@ -4,11 +4,14 @@ import com.rifas.publicas.model.*;
 import com.rifas.publicas.repository.*;
 import com.rifas.publicas.service.EmailService;
 
+import jakarta.validation.Valid;
+
 import org.apache.el.stream.Optional;
 import org.springframework.lang.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -59,7 +62,14 @@ public class MainController {
     }
 
     @PostMapping("/registro")
-    public String registrarUsuario(@ModelAttribute Usuario usuario, RedirectAttributes redirectAttributes) {
+    public String registrarUsuario(@Valid @ModelAttribute("usuario") Usuario usuario,
+            BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+
+        // Si hay errores de validación (ej. no cumple los 10 dígitos), regresa al
+        // formulario
+        if (bindingResult.hasErrors()) {
+            return "registro";
+        }
         try {
             usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
             usuario.setRol("ROLE_USER");

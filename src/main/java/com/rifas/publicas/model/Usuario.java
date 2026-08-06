@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 @Entity
 @Table(name = "usuarios")
 @Data
@@ -24,8 +25,12 @@ public class Usuario {
     @Column(nullable = false, length = 100)
     private String nombre;
 
-    @Column(length = 20)
+    @NotBlank(message = "El teléfono es obligatorio")
+    @Pattern(regexp = "^[0-9]{10}$", message = "El teléfono debe contener exactamente 10 dígitos numéricos")
     private String telefono;
+
+    // @Column(length = 20)
+    // private String telefono;
 
     @Column(nullable = false, length = 30)
     private String rol; // ROLE_USER, ROLE_ADMIN

@@ -124,8 +124,11 @@
                     <label class="form-label fw-semibold small text-muted">Teléfono / WhatsApp</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
-                        <input type="text" th:field="*{telefono}" class="form-control" placeholder="10 dígitos" required>
+                        <input type="text" th:field="*{telefono}" id="telefono" class="form-control" placeholder="10 dígitos"
+                            maxlength="10" pattern="[0-9]{10}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);"
+                            required>
                     </div>
+                    <div class="form-text text-muted" style="font-size: 0.75rem;">Ingresa solo 10 números sin espacios ni guiones.</div>
                 </div>
 
                 <div class="mb-4">
@@ -140,8 +143,13 @@
             </form>
 
             <div class="text-center mt-4 pt-3 border-top border-secondary border-opacity-25">
-                <a href="/login" class="text-decoration-none small text-warning fw-semibold">¿Ya tienes cuenta? Inicia sesión aquí</a>
+                <a href="/login" class="text-decoration-none small fw-semibold d-block mb-2" style="color: #0284c7 !important;">¿Ya
+                    tienes cuenta? Inicia sesión aquí</a>
+                <a href="/" class="text-decoration-none small fw-semibold" style="color: #475569 !important;">
+                    <i class="fa-solid fa-house me-1"></i> Volver al Inicio
+                </a>
             </div>
+
         </div>
     </div>
 </body>
