@@ -78,11 +78,17 @@ public class MainController {
 
     @PostMapping("/comprar")
     public String comprarBoletos(@RequestParam("rifaId") Long rifaId,
-            @RequestParam("boletosSeleccionados") List<Long> boletoIds,
+            @RequestParam(value = "boletosSeleccionados", required = false) List<Long> boletoIds,
             Principal principal,
             RedirectAttributes redirectAttributes) {
         if (principal == null) {
             return "redirect:/login";
+        }
+        
+        // Validación si no se seleccionó ningún boleto
+        if (boletoIds == null || boletoIds.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensajeError", "Por favor selecciona al menos un boleto para apartar.");
+            return "redirect:/rifas/" + rifaId;
         }
 
         Usuario usuario = usuarioRepository.findByEmail(principal.getName())
