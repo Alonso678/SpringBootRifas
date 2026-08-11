@@ -172,7 +172,7 @@ public class MainController {
     @GetMapping("/rifas/{id}")
     public String detalleRifa(@PathVariable("id") Long id, Model model) {
         Rifa rifa = rifaRepository.findById(id).orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
-        List<Boleto> boletos = boletoRepository.findByRifaId(id);
+        List<Boleto> boletos = boletoRepository.findByRifaIdOrderByNumeroBoletoAsc(id);
         model.addAttribute("rifa", rifa);
         model.addAttribute("boletos", boletos);
         return "detalle-rifa";

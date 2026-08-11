@@ -39,6 +39,10 @@
             box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
             transform: scale(1.05);
         }
+
+        .badge-disponible { background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; }
+        .badge-apartado { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .badge-pagado { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     </style>
 </head>
 <body class="bg-light">
@@ -54,10 +58,13 @@
         <div class="card shadow-sm p-4 border-0 rounded-4 bg-white">
             <h3 class="fw-bold h4 mb-3"><i class="fa-solid fa-list-check text-primary me-2"></i>Selecciona tus Boletos</h3>
             
-            <div class="mb-3 d-flex gap-3 small text-muted">
-                <span><span class="badge bg-secondary p-2 me-1"></span> Disponible</span>
-                <span><span class="badge bg-warning text-dark p-2 me-1"></span> Apartado</span>
-                <span><span class="badge bg-danger p-2 me-1"></span> Vendido/Pagado</span>
+            <div class="mb-3 d-flex gap-3 small text-muted align-items-center">
+                <span class="d-flex align-items-center"><span class="badge badge-disponible p-2 me-1 border"
+                        style="width: 18px; height: 18px; display: inline-block;"></span> Disponible</span>
+                <span class="d-flex align-items-center"><span class="badge badge-apartado p-2 me-1 border"
+                        style="width: 18px; height: 18px; display: inline-block;"></span> Apartado</span>
+                <span class="d-flex align-items-center"><span class="badge badge-pagado p-2 me-1 border"
+                        style="width: 18px; height: 18px; display: inline-block;"></span> Vendido/Pagado</span>
             </div>
 
             <div th:if="${mensajeError}" class="alert alert-danger shadow-sm" th:text="${mensajeError}"></div>
