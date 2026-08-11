@@ -3,14 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Validación de Compras</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Hace visible el placeholder en inputs con fondo oscuro */
+        .form-control.bg-dark::placeholder {
+            color: #adb5bd;
+            opacity: 1;
+        }
+    </style>
 </head>
 <body class="bg-light">
-    <div class="container mt-4">
+    <div class="container mt-4 px-3 px-md-4">
         <a href="/admin/rifas" class="btn btn-secondary mb-3">← Volver a Admin Rifas</a>
         <!-- Formulario de búsqueda avanzada -->
         <form th:action="@{/admin/compras}" method="get" class="row g-3 mb-4">
-            <div class="col-md-9">
+            <div class="col-12 col-md-9">
                 <div class="input-group">
                     <span class="input-group-text bg-dark border-secondary text-warning"><i
                             class="fa-solid fa-search"></i></span>
@@ -19,51 +26,60 @@
                         th:value="${filtroActual}">
                 </div>
             </div>
-            <div class="col-md-3 d-flex gap-2">
+            <div class="col-12 col-md-3 d-flex gap-2">
                 <button type="submit" class="btn btn-warning fw-bold flex-grow-1">Buscar</button>
                 <a th:href="@{/admin/compras}" class="btn btn-outline-secondary">Limpiar</a>
             </div>
         </form>
-        <h2>Gestión y Validación de Pagos</h2>
-        <table class="table table-striped shadow-sm bg-white rounded mt-3">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Usuario</th>
-                    <th>Rifa</th>
-                    <th>Boletos</th>
-                    <th>Total</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="c : ${compras}">
-                    <td th:text="${c.id}">1</td>
-                    <td th:text="${c.usuario.nombre + ' (' + c.usuario.email + ')'}">Usuario</td>
-                    <td th:text="${c.rifa.titulo}">Rifa</td>
-                    <td>
-                        <span th:each="b : ${c.boletos}" class="badge bg-secondary me-1" th:text="${b.numeroBoleto}">1</span>
-                    </td>
-                    <td th:text="'$' + ${c.montoTotal}">$0.00</td>
-                    <td>
-                        <span class="badge" th:classappend="${c.estadoPago == 'PAGADO' ? 'bg-success' : 'bg-warning text-dark'}" th:text="${c.estadoPago}">PENDIENTE</span>
-                    </td>
-                    <td>
-                        <form th:action="@{/admin/compras/validar/{id}(id=${c.id})}" method="post" class="d-inline">
-                            <input type="hidden" name="estado" value="PAGADO" />
-                            <button type="submit" class="btn btn-success btn-sm fw-bold">
-                                <i class="fa-solid fa-check me-1"></i> Aprobar Pago
-                            </button>
-                        </form>              
-                        <form th:action="@{/admin/compras/validar/{id}(id=${c.id})}" method="post" class="d-inline">
-                            <input type="hidden" name="estado" value="RECHAZADO">
-                            <button type="submit" class="btn btn-danger btn-sm">Rechazar</button>
-                        </form>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <h2 class="text-white">Gestión y Validación de Pagos</h2>
+        
+        <!-- Contenedor responsivo para la tabla -->
+        <div class="table-responsive shadow-sm bg-white rounded mt-3">
+            <table class="table table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Rifa</th>
+                        <th>Boletos</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="c : ${compras}">
+                        <td th:text="${c.id}">1</td>
+                        <td th:text="${c.usuario.nombre + ' (' + c.usuario.email + ')'}">Usuario</td>
+                        <td th:text="${c.rifa.titulo}">Rifa</td>
+                        <td>
+                            <span th:each="b : ${c.boletos}" class="badge bg-secondary me-1" th:text="${b.numeroBoleto}">1</span>
+                        </td>
+                        <td th:text="'$' + ${c.montoTotal}">$0.00</td>
+                        <td>
+                            <span class="badge" th:classappend="${c.estadoPago == 'PAGADO' ? 'bg-success' : 'bg-warning text-dark'}" th:text="${c.estadoPago}">PENDIENTE</span>
+                        </td>
+                        <td>
+                            <!-- Se muestran las acciones únicamente si el pago NO está completado -->
+                            <div class="d-flex flex-wrap gap-1" th:if="${c.estadoPago != 'PAGADO'}">
+                                <form th:action="@{/admin/compras/validar/{id}(id=${c.id})}" method="post" class="d-inline">
+                                    <input type="hidden" name="estado" value="PAGADO" />
+                                    <button type="submit" class="btn btn-success btn-sm fw-bold text-nowrap">
+                                        <i class="fa-solid fa-check me-1"></i> Aprobar Pago
+                                    </button>
+                                </form>              
+                                <form th:action="@{/admin/compras/validar/{id}(id=${c.id})}" method="post" class="d-inline">
+                                    <input type="hidden" name="estado" value="RECHAZADO">
+                                    <button type="submit" class="btn btn-danger btn-sm text-nowrap">Rechazar</button>
+                                </form>
+                            </div>
+                            <!-- Texto alternativo cuando está pagado -->
+                            <span class="text-muted small" th:if="${c.estadoPago == 'PAGADO'}">Completado</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
 </html>
