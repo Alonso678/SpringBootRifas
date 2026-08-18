@@ -6,6 +6,7 @@ import com.rifas.publicas.service.EmailService;
 
 import jakarta.validation.Valid;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -30,6 +31,10 @@ public class MainController {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+
+    // 1. Inyectamos la URL base desde el properties
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     public MainController(RifaRepository rifaRepository, BoletoRepository boletoRepository,
             CompraRepository compraRepository, UsuarioRepository usuarioRepository,
@@ -128,7 +133,7 @@ public class MainController {
             usuario.setToken(token);
             usuarioRepository.save(usuario);
 
-            String link = "http://localhost:8080/reset-password?token=" + token;
+            String link = baseUrl + "/reset-password?token=" + token;
             emailService.enviarEmail(email, "Recuperación de contraseña",
                     "Haz clic aquí para restablecer tu contraseña: " + link);
         }
