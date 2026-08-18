@@ -73,11 +73,19 @@
                 <input type="hidden" name="rifaId" th:value="${rifa.id}">
                 <div class="boleto-grid mb-4 shadow-inner">
                     <div th:each="b : ${boletos}">
+                        <!-- Si está disponible -->
                         <div th:if="${b.estado == 'DISPONIBLE'}">
-                            <input type="checkbox" name="boletosSeleccionados" th:value="${b.id}" th:id="'b_' + ${b.id}" class="boleto-checkbox">
-                            <label th:for="'b_' + ${b.id}" class="boleto-item DISPONIBLE w-100 shadow-sm" th:text="${b.numeroBoleto}"></label>
+                            <input type="checkbox" name="boletosSeleccionados" th:value="${b.id}" th:id="'b_' + ${b.id}"
+                                class="boleto-checkbox">
+                            <label th:for="'b_' + ${b.id}" class="boleto-item DISPONIBLE w-100 shadow-sm"
+                                th:text="${b.numeroBoleto}"></label>
                         </div>
-                        <div th:unless="${b.estado == 'DISPONIBLE'}" class="boleto-item shadow-sm" th:classappend="${b.estado}" th:text="${b.numeroBoleto}" title="No disponible"></div>
+            
+                        <!-- Si NO está disponible (PAGADO, APARTADO, o CANJEADO) -->
+                        <div th:unless="${b.estado == 'DISPONIBLE'}" class="boleto-item shadow-sm"
+                            th:classappend="${b.estado == 'CANJEADO' ? 'PAGADO' : b.estado}" th:text="${b.numeroBoleto}"
+                            title="No disponible">
+                        </div>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold shadow">Apartar Boletos Seleccionados</button>

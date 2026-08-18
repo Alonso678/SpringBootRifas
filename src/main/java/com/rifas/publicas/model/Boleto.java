@@ -27,5 +27,5 @@ public class Boleto {
     private Usuario usuario;
 
     @Column(nullable = false, length = 30)
-    private String estado; // DISPONIBLE, APARTADO, PAGADO
+    private String estado; // DISPONIBLE, APARTADO, PAGADO, CANJEADO
 }

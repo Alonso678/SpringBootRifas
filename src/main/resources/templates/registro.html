@@ -138,7 +138,9 @@
                         <input type="password" th:field="*{password}" class="form-control" placeholder="••••••••" required>
                     </div>
                 </div>
-
+                
+                <!-- Campo oculto para capturar el código de referido -->
+                <input type="hidden" name="ref" th:value="${param.ref}">
                 <button type="submit" class="btn btn-gold w-100 py-3 rounded-pill shadow">Registrarse y Jugar</button>
             </form>
 
