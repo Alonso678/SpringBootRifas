@@ -1,24 +1,26 @@
 package com.rifas.publicas.service;
 
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import com.resend.Resend;
+import com.resend.services.emails.model.SendEmailRequest;
 import org.springframework.stereotype.Service;
 
 @Service
 public class EmailService {
-    
-    private final JavaMailSender mailSender;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
+    private final Resend resend = new Resend(System.getenv("RESEND_API_KEY"));
 
-    public void enviarEmail(String to, String subject, String body) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("tu-correo@gmail.com");
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(body);
-        mailSender.send(message);
+    public void enviarEmail(String to, String subject, String htmlContent) {
+        SendEmailRequest sendEmailRequest = SendEmailRequest.builder()
+                .from("onboarding@resend.dev") // Recuerda que en Resend esto requiere dominio validado después
+                .to(to)
+                .subject(subject)
+                .html(htmlContent)
+                .build();
+
+        try {
+            resend.emails().send(sendEmailRequest);
+        } catch (Exception e) {
+            System.err.println("Error al enviar email con Resend: " + e.getMessage());
+        }
     }
 }
