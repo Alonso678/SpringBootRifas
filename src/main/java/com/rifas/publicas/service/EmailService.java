@@ -11,7 +11,7 @@ public class EmailService {
 
     public void enviarEmail(String to, String subject, String htmlContent) {
         SendEmailRequest sendEmailRequest = SendEmailRequest.builder()
-                .from("onboarding@resend.dev") // Recuerda que en Resend esto requiere dominio validado después
+                .from("notificaciones@fortunarifas.space") // Se configuro el dominio comprado en namecheap.com
                 .to(to)
                 .subject(subject)
                 .html(htmlContent)
