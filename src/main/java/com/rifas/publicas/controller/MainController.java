@@ -49,8 +49,13 @@ public class MainController {
 
     @GetMapping("/")
     public String index(Model model) {
-        // Solo carga las rifas con estado "ACTIVA"
-        model.addAttribute("rifas", rifaRepository.findByEstado("ACTIVA"));
+        // Carga las rifas que estén ACTIVA o AGOTADA, y cuya fecha de sorteo aún no haya pasado
+        List<Rifa> rifasVisibles = rifaRepository.findAll().stream()
+                .filter(r -> "ACTIVA".equals(r.getEstado()) || "AGOTADA".equals(r.getEstado()))
+                .filter(r -> r.getFechaSorteo() == null || r.getFechaSorteo().isAfter(LocalDateTime.now()))
+                .toList();
+
+        model.addAttribute("rifas", rifasVisibles);
         return "index";
     }
 
@@ -98,27 +103,6 @@ public class MainController {
         }
         return "redirect:/login";
     }
-
-    // @PostMapping("/registro")
-    // public String registrarUsuario(@Valid @ModelAttribute("usuario") Usuario usuario,
-    //         BindingResult bindingResult, RedirectAttributes redirectAttributes) {
-
-    //     // Si hay errores de validación (ej. no cumple los 10 dígitos), regresa al
-    //     // formulario
-    //     if (bindingResult.hasErrors()) {
-    //         return "registro";
-    //     }
-    //     try {
-    //         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
-    //         usuario.setRol("ROLE_USER");
-    //         usuarioRepository.save(usuario);
-    //         redirectAttributes.addFlashAttribute("mensajeExito", "Registro exitoso. Ahora puede iniciar sesión.");
-    //     } catch (Exception e) {
-    //         redirectAttributes.addFlashAttribute("mensajeError", "El correo ya está registrado.");
-    //         return "redirect:/registro";
-    //     }
-    //     return "redirect:/login";
-    // }
 
     // Muestra la vista con el formulario para ingresar el correo
     @GetMapping("/recuperar-password")
@@ -280,7 +264,7 @@ public class MainController {
 
     @GetMapping("/admin/rifas/nuevo")
     public String formularioCrear(Model model) {
-        model.addAttribute("rifa", new Rifa());
+        model.addAttribute("nuevaRifa", new Rifa());
         return "admin/form";
     }
 
@@ -288,12 +272,12 @@ public class MainController {
     public String formularioEditar(@PathVariable("id") Long id, Model model) {
         Rifa rifa = rifaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
-        model.addAttribute("rifa", rifa);
+        model.addAttribute("nuevaRifa", rifa);
         return "admin/form";
     }
 
     @PostMapping("/admin/rifas/guardar")
-    public String guardarRifa(@ModelAttribute Rifa rifa) {
+    public String guardarRifa(@ModelAttribute("nuevaRifa") Rifa rifa) {
         if (rifa.getId() == null) {
             if (rifa.getEstado() == null || rifa.getEstado().isEmpty()) {
                 rifa.setEstado("ACTIVA");
@@ -331,9 +315,14 @@ public class MainController {
     public String cambiarEstatus(@PathVariable("id") Long id) {
         Rifa rifa = rifaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
+
+        // Alterna correctamente entre ACTIVA y FINALIZADA respetando tu modelo
         rifa.setEstado("ACTIVA".equals(rifa.getEstado()) ? "FINALIZADA" : "ACTIVA");
+
         rifaRepository.save(rifa);
-        return "redirect:/";
+
+        // Redirige de vuelta al panel de administración de rifas
+        return "redirect:/admin/rifas";
     }
 
     @GetMapping("/admin/rifas/eliminar/{id}")
@@ -514,22 +503,4 @@ public class MainController {
                         + "<br>Tu monedero se ha reiniciado.");
         return "redirect:/mis-compras";
     }
-
-    // @PostMapping("/admin/compras/validar/{id}")
-    // public String validarPago(@PathVariable("id") @NonNull Long compraId, @RequestParam("estado") String estado) {
-    //     Compra compra = compraRepository.findById(compraId).orElseThrow();
-    //     compra.setEstadoPago(estado);
-    //     compraRepository.save(compra);
-
-    //     for (Boleto b : compra.getBoletos()) {
-    //         if ("PAGADO".equals(estado)) {
-    //             b.setEstado("PAGADO");
-    //         } else {
-    //             b.setEstado("DISPONIBLE");
-    //             b.setUsuario(null);
-    //         }
-    //         boletoRepository.save(b);
-    //     }
-    //     return "redirect:/admin/compras";
-    // }
 }

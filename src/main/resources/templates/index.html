@@ -346,12 +346,28 @@
                             Descripción de la rifa...
                         </p>
                         
+                        <!-- Bloque de Fecha Límite y Disponibilidad Dinámica -->
+                        <div class="my-3 p-2 rounded-2 bg-black bg-opacity-40 border border-secondary border-opacity-25 small">
+                            <div class="d-flex justify-content-between align-items-center text-light mb-1">
+                                <span><i class="fa-regular fa-calendar-days text-warning me-1"></i> Sorteo:</span>
+                                <span class="fw-semibold" th:text="${#temporals.format(rifa.fechaSorteo, 'dd/MM/yyyy')}">29/08/2026</span>
+                            </div>
+                        </div>
+
                         <div class="d-flex justify-content-between align-items-center mt-3">
                             <span class="fs-5 fw-bold text-success" th:text="${'$' + rifa.precioBoleto + ' MXN'}">$0.00</span>
                         
-                            <!-- Botón normal para usuarios -->
+                            <!-- Botón Activo (Si hay boletos disponibles y no es ADMIN) -->
                             <a th:href="@{/rifas/{id}(id=${rifa.id})}" class="btn btn-warning fw-bold btn-sm"
-                                th:unless="${#authorization.expression('hasRole(''ADMIN'')')}">PARTICIPAR AHORA</a>
+                                th:if="${rifa.estado == 'ACTIVA' and !#authorization.expression('hasRole(''ADMIN'')')}">
+                                PARTICIPAR AHORA
+                            </a>
+
+                            <!-- Botón Agotado (Si se agotaron los boletos pero sigue vigente) -->
+                            <button class="btn btn-secondary fw-bold btn-sm opacity-75 text-white" disabled 
+                                    th:if="${rifa.estado == 'AGOTADA' and !#authorization.expression('hasRole(''ADMIN'')')}">
+                                ¡BOLETOS AGOTADOS!
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -359,7 +375,7 @@
         </div>
     </div>
 
-    <!-- AComponentes interactivos del menu Hambuerguesa -->
+    <!-- Componentes interactivos del menu Hamburguesa -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Script exclusivo de Rebote del Pop-up para el Index -->

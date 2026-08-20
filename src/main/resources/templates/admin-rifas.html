@@ -53,7 +53,7 @@
     <!-- Canvas de Fondo Estelar -->
     <canvas id="bg-canvas"></canvas>
 
-    <!-- Barra de Navegación Global (Igual que en las demás vistas) -->
+    <!-- Barra de Navegación Global -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top px-3">
         <div class="container">
             <a class="navbar-brand fw-bold fs-4 text-warning" href="/"><i class="fa-solid fa-dice me-2"></i>FORTUNA<span class="text-white">RIFAS</span></a>
@@ -70,16 +70,15 @@
     </nav>
 
     <div class="container py-5">
-        <!-- Barra superior interna -->
 
         <div class="text-center mb-5">
             <h2 class="text-white fw-bold">Panel de Administración de Rifas</h2>
             <p class="text-muted">Selecciona la acción que deseas gestionar</p>
         </div>
 
-        <!-- Menú de Tarjetas de Opciones -->
+        <!-- Menú de Acciones -->
         <div class="row g-4 justify-content-center">
-            <!-- Opción 1: Crear Rifa -->
+            <!-- Opción 1: Crear Rifa mediante Modal (Limpia el formulario para crear) -->
             <div class="col-md-4">
                 <div class="card bg-dark border-secondary text-white h-100 shadow-sm">
                     <div class="card-body text-center p-4 d-flex flex-column justify-content-between">
@@ -88,7 +87,7 @@
                             <h4 class="fw-bold">Crear Nueva Rifa</h4>
                             <p class="text-muted small">Configura un nuevo sorteo, establece el precio y genera la numeración automática de boletos.</p>
                         </div>
-                        <button class="btn btn-warning fw-bold mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#formCrearRifa" aria-expanded="false">
+                        <button class="btn btn-warning fw-bold mt-3" type="button" data-bs-toggle="modal" data-bs-target="#modalCrearRifa" onclick="prepararCreacion()">
                             Gestionar Creación
                         </button>
                     </div>
@@ -112,7 +111,7 @@
             </div>
         </div>
 
-        <!-- Sección de Listado de Rifas Existentes para Gestión -->
+        <!-- Sección de Listado de Rifas Existentes -->
         <div class="mt-5 pt-4 border-top border-secondary">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="text-white fw-bold">Rifas Registradas</h3>
@@ -133,50 +132,66 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Iteramos sobre la lista de rifas que viene del controlador admin -->
                                 <tr th:each="rifa : ${rifas}">
+                                    <!-- 1. Título -->
                                     <td class="fw-bold text-warning" th:text="${rifa.titulo}">Título de la Rifa</td>
+                        
+                                    <!-- 2. Precio -->
                                     <td th:text="${'$' + rifa.precioBoleto}">$0.00</td>
+                        
+                                    <!-- 3. Total Boletos -->
                                     <td th:text="${rifa.totalBoletos}">0</td>
+                        
+                                    <!-- 4. Sorteo -->
                                     <td th:text="${#temporals.format(rifa.fechaSorteo, 'dd/MM/yyyy HH:mm')}">Fecha</td>
+                        
+                                    <!-- 5. Estado -->
                                     <td>
-                                        <!-- Indicador visual del estatus -->
                                         <span th:text="${rifa.estado}"
                                             th:class="${rifa.estado == 'ACTIVA'} ? 'badge bg-success' : 'badge bg-secondary'">
                                         </span>
                                     </td>
+                        
+                                    <!-- 6. Acciones -->
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm" role="group">
                                             <!-- Botón Editar -->
-                                            <a th:href="@{/admin/rifas/editar/{id}(id=${rifa.id})}" class="btn btn-warning"
-                                                title="Editar">
+                                            <button type="button" class="btn btn-warning" data-bs-toggle="modal"
+                                                data-bs-target="#modalCrearRifa" th:onclick="prepararEdicion(
+                                                    [[${rifa.id}]], 
+                                                    [[${rifa.titulo}]], 
+                                                    [[${rifa.descripcion}]], 
+                                                    [[${rifa.precioBoleto}]], 
+                                                    [[${rifa.totalBoletos}]], 
+                                                    [[${rifa.fechaSorteo}]], 
+                                                    [[${rifa.videoUrl}]],
+                                                    [[${rifa.imagenUrl}]],
+                                                    [[${rifa.estado}]]
+                                                )" title="Editar">
                                                 <i class="fa-solid fa-pen-to-square"></i>
-                                            </a>
-        
-                                            <!-- Botón Cambiar Estatus (Activar / Desactivar) -->
-                                            <form th:action="@{/admin/rifas/estatus/{id}(id=${rifa.id})}" method="post"
-                                                class="d-inline">
+                                            </button>
+                        
+                                            <!-- Botón Cambiar Estatus (Activa / Finalizada) -->
+                                            <form th:action="@{/admin/rifas/estatus/{id}(id=${rifa.id})}" method="post" class="d-inline">
                                                 <button type="submit"
                                                     th:class="${rifa.estado == 'ACTIVA'} ? 'btn btn-secondary' : 'btn btn-success'"
-                                                    th:title="${rifa.estado == 'ACTIVA'} ? 'Desactivar' : 'Activar'">
-                                                    <i
-                                                        th:class="${rifa.estado == 'ACTIVA'} ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                                                    th:title="${rifa.estado == 'ACTIVA'} ? 'Finalizar' : 'Activar'">
+                                                    <i th:class="${rifa.estado == 'ACTIVA'} ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
                                                 </button>
                                             </form>
-        
+                        
                                             <!-- Botón Eliminar -->
-                                            <a th:href="@{/admin/rifas/eliminar/{id}(id=${rifa.id})}" class="btn btn-danger"
-                                                title="Eliminar"
+                                            <a th:href="@{/admin/rifas/eliminar/{id}(id=${rifa.id})}" class="btn btn-danger" title="Eliminar"
                                                 onclick="return confirm('¿Estás seguro de eliminar esta rifa? Se borrarán sus datos asociados.');">
                                                 <i class="fa-solid fa-trash"></i>
                                             </a>
                                         </div>
                                     </td>
                                 </tr>
-                                <!-- Mensaje si no hay rifas -->
+                        
+                                <!-- Mensaje si no hay registros -->
                                 <tr th:if="${#lists.isEmpty(rifas)}">
-                                    <td colspan="6" class="text-center text-muted py-4">No hay rifas registradas en el sistema.
-                                    </td>
+                                    <td colspan="6" class="text-center text-muted py-4">No hay rifas registradas en el sistema.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -185,60 +200,109 @@
             </div>
         </div>
 
-        <!-- Formulario oculto que se despliega al hacer clic -->
-        <div class="collapse mt-5" id="formCrearRifa">
-            <div class="card shadow-lg bg-dark border-secondary p-4 p-md-5">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="text-white fw-bold m-0">Crear Nueva Rifa</h4>
-                    <button type="button" class="btn-close btn-close-white" data-bs-toggle="collapse" data-bs-target="#formCrearRifa"></button>
+        <!-- MODAL ÚNICO PARA CREAR Y EDITAR RIFA -->
+        <div class="modal fade" id="modalCrearRifa" tabindex="-1" aria-labelledby="modalCrearRifaLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content bg-dark border-secondary text-white shadow-lg">
+                    <div class="modal-header border-secondary">
+                        <h4 class="modal-title text-white fw-bold" id="modalCrearRifaLabel">Crear Nueva Rifa</h4>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    
+                    <form id="formRifaModal" th:action="@{/admin/rifas/guardar}" th:object="${nuevaRifa}" method="post">
+                        <!-- Campo oculto indispensable para mandar el ID al actualizar -->
+                        <input type="hidden" id="rifaId" th:field="*{id}">
+                        <!-- Campo oculto para mantener el estado actual al editar -->
+                        <input type="hidden" id="rifaEstado" th:field="*{estado}">
+
+                        <div class="modal-body p-4">
+                            <div class="mb-3">
+                                <label class="form-label text-light">Título</label>
+                                <input type="text" id="rifaTitulo" th:field="*{titulo}" class="form-control bg-black text-light border-secondary" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-light">Descripción</label>
+                                <textarea id="rifaDescripcion" th:field="*{descripcion}" class="form-control bg-black text-light border-secondary" rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-light">Precio por Boleto ($)</label>
+                                <input type="number" step="0.01" id="rifaPrecio" th:field="*{precioBoleto}" class="form-control bg-black text-light border-secondary" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-light">Total de Boletos (ej. 100)</label>
+                                <input type="number" id="rifaTotalBoletos" th:field="*{totalBoletos}" class="form-control bg-black text-light border-secondary" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-light">Fecha del Sorteo</label>
+                                <input type="datetime-local" id="rifaFechaSorteo" th:field="*{fechaSorteo}" class="form-control bg-black text-light border-secondary" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-light">Enlace del Video del Sorteo (Opcional)</label>
+                                <input type="url" id="rifaVideoUrl" th:field="*{videoUrl}" class="form-control bg-black text-light border-secondary" placeholder="https://www.youtube.com/watch?v=...">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-light">URL de la Imagen (Opcional)</label>
+                                <input type="url" id="rifaImagenUrl" th:field="*{imagenUrl}" class="form-control bg-black text-light border-secondary" placeholder="https://...">
+                            </div>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSubmitModal">Crear Rifa y Generar Boletos</button>
+                        </div>
+                    </form>
                 </div>
-                
-                <form th:action="@{/admin/rifas/guardar}" th:object="${nuevaRifa}" method="post">
-                    <div class="mb-3">
-                        <label class="form-label text-light">Título</label>
-                        <input type="text" th:field="*{titulo}" class="form-control bg-black text-light border-secondary" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label text-light">Descripción</label>
-                        <textarea th:field="*{descripcion}" class="form-control bg-black text-light border-secondary" rows="3" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label text-light">Precio por Boleto ($)</label>
-                        <input type="number" step="0.01" th:field="*{precioBoleto}" class="form-control bg-black text-light border-secondary" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label text-light">Total de Boletos (ej. 100)</label>
-                        <input type="number" th:field="*{totalBoletos}" class="form-control bg-black text-light border-secondary" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label text-light">Fecha del Sorteo</label>
-                        <input type="datetime-local" th:field="*{fechaSorteo}" class="form-control bg-black text-light border-secondary" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label text-light">Enlace del Video del Sorteo (Opcional)</label>
-                        <input type="url" th:field="*{videoUrl}" class="form-control bg-black text-light border-secondary" placeholder="https://www.youtube.com/watch?v=...">
-                        <div class="form-text text-muted">Puedes agregar un enlace de YouTube o Vimeo para mostrar la transparencia del sorteo finalizado.</div>
-                    </div>
-                    <div class="text-end">
-                        <button type="submit" class="btn btn-primary fw-bold px-4">Crear Rifa y Generar Boletos</button>
-                    </div>
-                </form>
             </div>
         </div>
+
     </div>
 
     <!-- Script de Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- Script para alternar el Modal entre Crear y Editar -->
+    <script>
+        function prepararCreacion() {
+            document.getElementById('modalCrearRifaLabel').innerText = "Crear Nueva Rifa";
+            document.getElementById('btnSubmitModal').innerText = "Crear Rifa y Generar Boletos";
+            
+            // Limpiar campos
+            document.getElementById('rifaId').value = "";
+            document.getElementById('rifaEstado').value = "";
+            document.getElementById('rifaTitulo').value = "";
+            document.getElementById('rifaDescripcion').value = "";
+            document.getElementById('rifaPrecio').value = "";
+            document.getElementById('rifaTotalBoletos').value = "";
+            document.getElementById('rifaFechaSorteo').value = "";
+            document.getElementById('rifaVideoUrl').value = "";
+            document.getElementById('rifaImagenUrl').value = "";
+        }
+
+        function prepararEdicion(id, titulo, descripcion, precio, totalBoletos, fechaSorteo, videoUrl, imagenUrl, estado) {
+            document.getElementById('modalCrearRifaLabel').innerText = "Editar Rifa";
+            document.getElementById('btnSubmitModal').innerText = "Guardar Cambios";
+            
+            // Rellenar campos con los valores de la rifa seleccionada
+            document.getElementById('rifaId').value = id;
+            document.getElementById('rifaEstado').value = estado || "ACTIVA";
+            document.getElementById('rifaTitulo').value = titulo || "";
+            document.getElementById('rifaDescripcion').value = descripcion || "";
+            document.getElementById('rifaPrecio').value = precio || "";
+            document.getElementById('rifaTotalBoletos').value = totalBoletos || "";
+            document.getElementById('rifaFechaSorteo').value = fechaSorteo ? fechaSorteo.replace('T', ' ').substring(0, 16) : "";
+            document.getElementById('rifaVideoUrl').value = videoUrl || "";
+            document.getElementById('rifaImagenUrl').value = imagenUrl || "";
+        }
+    </script>
+
     <!-- Script del Fondo Animado -->
     <script>
-        const cv = document.getElementById('bg-canvas');
-        const x = cv.getContext('2d');
-        let w, h, parts = [], coins = [];
+        const cvAdmin = document.getElementById('bg-canvas');
+        const xAdmin = cvAdmin.getContext('2d');
+        let wAdmin, hAdmin, partsAdmin = [], coinsAdmin = [];
 
         function rs() {
-            w = cv.width = window.innerWidth;
-            h = cv.height = window.innerHeight;
+            wAdmin = cvAdmin.width = window.innerWidth;
+            hAdmin = cvAdmin.height = window.innerHeight;
         }
         window.addEventListener('resize', rs);
         rs();
@@ -264,17 +328,17 @@
         }
 
         for(let i = 0; i < 80; i++) {
-            parts.push({
-                x: Math.random() * w,
-                y: Math.random() * h,
+            partsAdmin.push({
+                x: Math.random() * wAdmin,
+                y: Math.random() * hAdmin,
                 v: (Math.random() * 0.4 + 0.1),
                 r: Math.random() * 1.5 + 0.5
             });
         }
 
         function spawnCoin() {
-            coins.push({
-                x: Math.random() * w,
+            coinsAdmin.push({
+                x: Math.random() * wAdmin,
                 y: -40,
                 v: 1.8 + Math.random() * 2,
                 s: 14 + Math.random() * 6,
@@ -287,56 +351,56 @@
         setInterval(spawnCoin, 550);
 
         function frame() {
-            x.fillStyle = "#0b0f19";
-            x.fillRect(0, 0, w, h);
+            xAdmin.fillStyle = "#0b0f19";
+            xAdmin.fillRect(0, 0, wAdmin, hAdmin);
 
-            for(let p of parts) {
+            for(let p of partsAdmin) {
                 p.y += p.v;
-                if(p.y > h) p.y = 0;
-                x.beginPath();
-                x.fillStyle = "rgba(255, 215, 0, 0.3)";
-                x.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                x.fill();
+                if(p.y > hAdmin) p.y = 0;
+                xAdmin.beginPath();
+                xAdmin.fillStyle = "rgba(255, 215, 0, 0.3)";
+                xAdmin.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                xAdmin.fill();
             }
 
-            for(let i = coins.length - 1; i >= 0; i--) {
-                let c = coins[i];
+            for(let i = coinsAdmin.length - 1; i >= 0; i--) {
+                let c = coinsAdmin[i];
                 c.y += c.v;
                 c.a += c.spinSpeed;
                 c.sparkleAlpha += 0.08;
 
-                x.save();
-                x.translate(c.x, c.y);
-                x.rotate(c.a);
+                xAdmin.save();
+                xAdmin.translate(c.x, c.y);
+                xAdmin.rotate(c.a);
 
-                x.shadowColor = "#f59e0b";
-                x.shadowBlur = 12;
+                xAdmin.shadowColor = "#f59e0b";
+                xAdmin.shadowBlur = 12;
 
-                x.fillStyle = "#fbbf24";
-                x.beginPath();
-                x.ellipse(0, 0, c.s * 0.6, c.s, 0, 0, Math.PI * 2);
-                x.fill();
+                xAdmin.fillStyle = "#fbbf24";
+                xAdmin.beginPath();
+                xAdmin.ellipse(0, 0, c.s * 0.6, c.s, 0, 0, Math.PI * 2);
+                xAdmin.fill();
 
-                x.strokeStyle = "#fff";
-                x.lineWidth = 1.5;
-                x.stroke();
+                xAdmin.strokeStyle = "#fff";
+                xAdmin.lineWidth = 1.5;
+                xAdmin.stroke();
 
                 let twinkle = Math.abs(Math.sin(c.sparkleAlpha));
                 if (twinkle > 0.3) {
-                    x.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
-                    x.shadowColor = "#ffffff";
-                    x.shadowBlur = 15;
-                    drawStarSparkle(x, c.sparkleOffset.x, c.sparkleOffset.y, 6, 2);
+                    xAdmin.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
+                    xAdmin.shadowColor = "#ffffff";
+                    xAdmin.shadowBlur = 15;
+                    drawStarSparkle(xAdmin, c.sparkleOffset.x, c.sparkleOffset.y, 6, 2);
                 }
 
-                x.restore();
+                xAdmin.restore();
 
-                if(c.y > h + 40) {
-                    coins.splice(i, 1);
+                if(c.y > hAdmin + 40) {
+                    coinsAdmin.splice(i, 1);
                 }
             }
 
-            x.shadowBlur = 0;
+            xAdmin.shadowBlur = 0;
             requestAnimationFrame(frame);
         }
         frame();
