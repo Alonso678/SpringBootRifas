@@ -47,12 +47,13 @@
             box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
         }
 
-        /* Estilos del Pop-up exclusivo del Index */
+        /* --- POP-UP ANTERIOR (Comentado por si deseas conservarlo o consultarlo) --- */
+        /* Estilos del Pop-up Flotante con Rebote Original */
         #popup-banner {
             position: fixed;
             left: 50px;
             top: 50px;
-            width: 260px;
+            width: 240px;
             z-index: 1050;
             cursor: pointer;
             mix-blend-mode: screen;
@@ -69,6 +70,41 @@
             display: block;
         }
 
+        /* Estilos del Modal Central */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .custom-modal-card {
+            width: 90%;
+            max-width: 420px;
+            border-radius: 1rem;
+            overflow: hidden;
+            position: relative;
+            animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleUp {
+            from { transform: scale(0.85); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
         @keyframes floatDice {
             0%, 100% { transform: translateY(0) rotate(0deg); }
             50% { transform: translateY(-12px) rotate(5deg); }
@@ -82,6 +118,16 @@
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleUp {
+            from { transform: scale(0.85); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
         .col-md-4:nth-child(1) .card-sorteo { animation-delay: 0.1s; }
@@ -107,11 +153,101 @@
 <body>
     <!-- Canvas de Animación -->
     <canvas id="bg-canvas"></canvas>
-
-    <!-- Pop-up Flotante con Rebote -->
-    <a href="/registro" id="popup-banner" th:unless="${#authorization.expression('hasRole(''ADMIN'')')}">
+    
+    <!-- Pop-up Flotante con Rebote que ahora abre el Modal de Referidos -->
+    <div id="popup-banner" onclick="openReferralModal()" th:unless="${#authorization.expression('hasRole(''ADMIN'')')}">
         <img src="/assets/entra-para-ganar.png" th:src="@{/assets/entra-para-ganar.png}" alt="Entra para ganar">
-    </a>
+    </div>
+    
+    <!-- Modal Informativo de Referidos (Se abre al hacer clic en el flotante) -->
+    <div id="referralModal" class="custom-modal-overlay" style="display: none;">
+        <div class="custom-modal-card bg-dark text-white border border-secondary shadow-lg">
+            <!-- Botón de Cerrar -->
+            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+                onclick="closeReferralModal()"></button>
+    
+            <!-- Cabecera / Imagen Visual -->
+            <div class="text-center p-4 bg-black bg-opacity-25 rounded-top">
+                <span class="badge badge-gold px-3 py-1 rounded-pill mb-2 text-uppercase tracking-wider">✨ Bono de
+                    Bienvenida</span>
+                <div style="font-size: 3.5rem;" class="my-2">🎁 🎟️ 🤝</div>
+                <h3 class="fw-bold text-warning m-0">¡Multiplica tus Oportunidades!</h3>
+            </div>
+    
+            <!-- Cuerpo del Modal -->
+            <div class="p-4 text-center">
+                <p class="text-light small mb-4" style="line-height: 1.5;">
+                    ¡Haz que tus amigos jueguen y gana! Comparte tu enlace único de referidos y obtén <strong>boletos
+                        gratis</strong> cada vez que alcances la meta de <strong>10 o más boletos vendidos</strong> usando tu
+                    código.
+                </p>
+            
+                <!-- Pasos rápidos claros -->
+                <div class="row g-2 mb-4 text-start bg-black bg-opacity-50 p-3 rounded-3 border border-secondary">
+                    <div class="col-12 small text-light mb-1">🚀 <strong>1. Regístrate gratis</strong> en segundos.</div>
+                    <div class="col-12 small text-light mb-1">🔗 <strong>2. Comparte</strong> tu enlace con amigos.</div>
+                    <div class="col-12 small text-light">🏆 <strong>3. Vende 10+ boletos</strong> y reclama tus recompensas.</div>
+                </div>
+            
+                <!-- Botones de Acción -->
+                <div class="d-grid gap-2">
+                    <a href="/registro" class="btn btn-warning fw-bold py-2">Crear Cuenta y Obtener Enlace</a>
+                    <!-- Botón secundario con mejor estilo -->
+                    <button type="button" class="btn btn-outline-secondary btn-sm w-100 text-light border-secondary py-2 mt-2"
+                        onclick="closeReferralModal()">Seguir viendo rifas</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Interactivo para Sugerir la Próxima Rifa -->
+    <div id="suggestionModal" class="custom-modal-overlay" style="display: none;">
+        <div class="custom-modal-card bg-dark text-white border border-secondary shadow-lg">
+            <!-- Botón de Cerrar -->
+            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+                onclick="closeSuggestionModal()"></button>
+    
+            <!-- Cabecera Visual -->
+            <div class="text-center p-4 bg-black bg-opacity-25 rounded-top">
+                <span class="badge badge-gold px-3 py-1 rounded-pill mb-2 text-uppercase tracking-wider">💡 Tu voz
+                    cuenta</span>
+                <div style="font-size: 3rem;" class="my-2">🎯 🔮</div>
+                <h3 class="fw-bold text-warning m-0">¿Qué te gustaría rifar próximamente?</h3>
+            </div>
+    
+            <!-- Cuerpo del Formulario -->
+            <div class="p-4 text-start">
+                <p class="text-light small mb-3 text-center" style="line-height: 1.4;">
+                    Queremos premiar lo que de verdad te interesa. Déjanos tu propuesta y la consideraremos para nuestros
+                    próximos sorteos.
+                </p>
+    
+                <!-- Formulario de sugerencia -->
+                <form id="suggestionForm" onsubmit="submitSuggestion(event)">
+                    <div class="mb-3">
+                        <label for="premioSugerido" class="form-label small text-warning fw-bold">¿Qué artículo o premio
+                            sugieres?</label>
+                        <input type="text" class="form-control bg-black text-white border-secondary" id="premioSugerido"
+                            placeholder="Ej. Consola de videojuegos, Motocicleta, etc." required>
+                    </div>
+    
+                    <div class="mb-3">
+                        <label for="contactoUsuario" class="form-label small text-warning fw-bold">Tu Correo o Nombre
+                            (Opcional)</label>
+                        <input type="text" class="form-control bg-black text-white border-secondary" id="contactoUsuario"
+                            placeholder="Para avisarte si tu idea es seleccionada">
+                    </div>
+    
+                    <!-- Botones de Acción -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-warning fw-bold py-2">🚀 Enviar Sugerencia</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm text-light border-secondary py-2"
+                            onclick="closeSuggestionModal()">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top px-3">
         <div class="container">
@@ -119,8 +255,12 @@
             <div class="navbar-nav ms-auto align-items-center gap-2">
                 <a class="nav-link text-light" href="/mis-compras" th:if="${#authorization.expression('isAuthenticated()')}"><i class="fa-solid fa-ticket me-1"></i>Mis Boletos</a>
                 <a class="nav-link text-warning fw-semibold" href="/admin/rifas" th:if="${#authorization.expression('hasRole(''ADMIN'')')}"><i class="fa-solid fa-gauge-high me-1"></i>Panel Admin</a>
-                <a class="nav-link text-light" href="/login" th:unless="${#authorization.expression('isAuthenticated()')}"><i class="fa-solid fa-right-to-bracket me-1"></i>Iniciar Sesión</a>
-                <a class="btn btn-gold btn-sm px-3 py-2 rounded-pill" href="/registro" th:unless="${#authorization.expression('isAuthenticated()')}">¡Regístrate y gana!</a>
+                <a class="nav-link text-light" href="/login" th:unless="${#authorization.expression('isAuthenticated()')}"><i
+                        class="fa-solid fa-right-to-bracket me-1"></i>Iniciar Sesión</a>
+                <!-- Cambiamos el enlace de registro por un botón interactivo que abre el modal de sugerencias -->
+                <button type="button" class="btn btn-gold btn-sm px-3 py-2 rounded-pill" onclick="openSuggestionModal()">
+                    <i class="fa-solid fa-lightbulb me-1"></i> Sugiere tu Rifa
+                </button>
                 <form th:action="@{/logout}" method="post" class="d-inline" th:if="${#authorization.expression('isAuthenticated()')}">
                     <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">Salir</button>
                 </form>
@@ -172,29 +312,6 @@
                             <a th:href="@{/rifas/{id}(id=${rifa.id})}" class="btn btn-warning fw-bold btn-sm"
                                 th:unless="${#authorization.expression('hasRole(''ADMIN'')')}">PARTICIPAR AHORA</a>
                         </div>
-                        
-                        <!-- BOTONES DE ADMINISTRACIÓN (Solo aparecen si es ADMIN) -->
-                        <!-- <div class="mt-3 pt-2 border-top border-secondary d-flex gap-1 justify-content-between"
-                            th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
-                            Botón Editar 
-                            <a th:href="@{/admin/rifas/editar/{id}(id=${rifa.id})}" class="btn btn-outline-warning btn-sm flex-fill">
-                                <i class="fa-solid fa-pen-to-square me-1"></i> Editar
-                            </a>
-                        
-                            Botón Cambiar Estatus (Activar / Inactivar)
-                            <form th:action="@{/admin/rifas/estatus/{id}(id=${rifa.id})}" method="post" class="flex-fill d-inline">
-                                <button type="submit"
-                                    th:class="${rifa.estado == 'ACTIVA'} ? 'btn btn-outline-secondary btn-sm w-100' : 'btn btn-outline-success btn-sm w-100'"
-                                    th:text="${rifa.estado == 'ACTIVA'} ? 'Desactivar' : 'Activar'">
-                                </button>
-                            </form>
-                        
-                            Botón Eliminar
-                            <a th:href="@{/admin/rifas/eliminar/{id}(id=${rifa.id})}" class="btn btn-outline-danger btn-sm"
-                                onclick="return confirm('¿Estás seguro de eliminar esta rifa?');">
-                                <i class="fa-solid fa-trash"></i>
-                            </a>
-                        </div> -->
                     </div>
                 </div>
             </div>
@@ -204,15 +321,86 @@
     <!-- Script exclusivo de Rebote del Pop-up para el Index -->
     <script>
         const pop = document.getElementById('popup-banner');
+        let isPaused = false; // Declarada globalmente para el script y los modales
+
+        // Funciones para controlar el Modal de Referidos
+        function openReferralModal() {
+            document.getElementById('referralModal').style.display = 'flex';
+            isPaused = true; 
+        }
+
+        function closeReferralModal() {
+            document.getElementById('referralModal').style.display = 'none';
+            // Solo reanuda si el modal de sugerencias tampoco está abierto
+            if (document.getElementById('suggestionModal').style.display !== 'flex') {
+                isPaused = false; 
+            }
+        }
+
+        // Funciones para controlar el Modal de Sugerencias
+        function openSuggestionModal() {
+            document.getElementById('suggestionModal').style.display = 'flex';
+            isPaused = true; 
+        }
+
+        function closeSuggestionModal() {
+            document.getElementById('suggestionModal').style.display = 'none';
+            // Solo reanuda si el modal de referidos tampoco está abierto
+            if (document.getElementById('referralModal').style.display !== 'flex') {
+                isPaused = false; 
+            }
+        }
+
+        // Manejo del envío de la sugerencia conectado al Backend
+        function submitSuggestion(event) {
+            event.preventDefault(); // Evita que recargue la página
+            
+            const premio = document.getElementById('premioSugerido').value;
+            const contacto = document.getElementById('contactoUsuario').value;
+
+            const sugerenciaData = {
+                premioSugerido: premio,
+                contactoUsuario: contacto
+            };
+
+            fetch('/api/sugerencias', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(sugerenciaData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("¡Muchas gracias! Tu sugerencia ha sido enviada y registrada con éxito.");
+                    document.getElementById('suggestionForm').reset();
+                    closeSuggestionModal();
+                } else {
+                    alert("Hubo un error al procesar tu solicitud. Inténtalo de nuevo.");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Error de conexión con el servidor.");
+            });
+        }
+
+        // Script de Rebote Original
         if (pop) {
             let posX = Math.random() * (window.innerWidth - 300);
             let posY = Math.random() * (window.innerHeight - 200);
             let velX = 2.2;
             let velY = 1.8;
-            let isPaused = false;
 
             pop.addEventListener('mouseenter', () => { isPaused = true; });
-            pop.addEventListener('mouseleave', () => { isPaused = false; });
+            pop.addEventListener('mouseleave', () => { 
+                // Reanuda solo si ningún modal está abierto
+                if (document.getElementById('referralModal').style.display !== 'flex' && 
+                    document.getElementById('suggestionModal').style.display !== 'flex') {
+                    isPaused = false; 
+                }
+            });
+            
 
             function bouncePopup() {
                 if (!isPaused) {
@@ -237,6 +425,7 @@
                 requestAnimationFrame(bouncePopup);
             }
             requestAnimationFrame(bouncePopup);
+            
         }
     </script>
 </body>

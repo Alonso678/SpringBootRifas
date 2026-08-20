@@ -56,12 +56,18 @@
                             <span th:each="b : ${c.boletos}" class="badge bg-secondary me-1" th:text="${b.numeroBoleto}">1</span>
                         </td>
                         <td th:text="'$' + ${c.montoTotal}">$0.00</td>
+                        
+                        <!-- Columna Estado con soporte para CANJEADO -->
                         <td>
-                            <span class="badge" th:classappend="${c.estadoPago == 'PAGADO' ? 'bg-success' : 'bg-warning text-dark'}" th:text="${c.estadoPago}">PENDIENTE</span>
+                            <span class="badge"
+                                th:classappend="${c.estadoPago == 'PAGADO' ? 'bg-success' : (c.estadoPago == 'CANJEADO' ? 'bg-info text-dark' : 'bg-warning text-dark')}"
+                                th:text="${c.estadoPago}">PENDIENTE</span>
                         </td>
+
+                        <!-- Columna Acciones adaptada -->
                         <td>
-                            <!-- Se muestran las acciones únicamente si el pago NO está completado -->
-                            <div class="d-flex flex-wrap gap-1" th:if="${c.estadoPago != 'PAGADO'}">
+                            <!-- Se muestran las acciones únicamente si el pago está PENDIENTE -->
+                            <div class="d-flex flex-wrap gap-1" th:if="${c.estadoPago == 'PENDIENTE'}">
                                 <form th:action="@{/admin/compras/validar/{id}(id=${c.id})}" method="post" class="d-inline">
                                     <input type="hidden" name="estado" value="PAGADO" />
                                     <button type="submit" class="btn btn-success btn-sm fw-bold text-nowrap">
@@ -73,8 +79,10 @@
                                     <button type="submit" class="btn btn-danger btn-sm text-nowrap">Rechazar</button>
                                 </form>
                             </div>
-                            <!-- Texto alternativo cuando está pagado -->
+                            
+                            <!-- Textos alternativos descriptivos según el estatus -->
                             <span class="text-muted small" th:if="${c.estadoPago == 'PAGADO'}">Completado</span>
+                            <span class="text-muted small fw-semibold" th:if="${c.estadoPago == 'CANJEADO'}">Boleto de cortesía canjeado</span>
                         </td>
                     </tr>
                 </tbody>

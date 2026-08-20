@@ -74,6 +74,12 @@ public class MainController {
         if (bindingResult.hasErrors())
             return "registro";
 
+        // 1. Validar si el correo ya está registrado
+        if (usuarioRepository.findByEmail(usuario.getEmail()).isPresent()) {
+            redirectAttributes.addFlashAttribute("mensajeError", "El correo electrónico ya está registrado.");
+            return "redirect:/registro";
+        }
+
         try {
             usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
             usuario.setRol("ROLE_USER");
@@ -87,7 +93,7 @@ public class MainController {
             usuarioRepository.save(usuario);
             redirectAttributes.addFlashAttribute("mensajeExito", "Registro exitoso.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("mensajeError", "Error al registrar.");
+            redirectAttributes.addFlashAttribute("mensajeError", "Ocurrió un error inesperado al registrar.");
             return "redirect:/registro";
         }
         return "redirect:/login";
