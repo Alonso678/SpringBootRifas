@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Base64;
 
 @Controller
 public class MainController {
@@ -134,12 +136,8 @@ public class MainController {
 
     @GetMapping("/reset-password")
     public String mostrarFormularioReset(@RequestParam("token") String token, Model model) {
-        // Opcional: Validar si el token existe y no ha expirado en tu base de datos
-        // boolean isValid = tokenService.validarToken(token);
-        // if (!isValid) { model.addAttribute("error", "Token inválido o expirado"); }
-
         model.addAttribute("token", token);
-        return "reset-password-view"; // Nombre de tu archivo HTML (ej. reset-password-view.html)
+        return "reset-password-view"; 
     }
 
     @PostMapping("/reset-password")
@@ -150,28 +148,18 @@ public class MainController {
         System.out.println("Token recibido: " + token);
         System.out.println("Nueva contraseña recibida: " + nuevaPassword);
 
-        // 1. Buscar al usuario por medio del token de recuperación
-        // (Asegúrate de tener este método en tu UsuarioRepository, o busca por el campo
-        // que uses para el token)
         Usuario usuario = usuarioRepository.findByToken(token).orElse(null);
 
         if (usuario == null) {
             model.addAttribute("error", "El token de recuperación es inválido o ha expirado.");
             model.addAttribute("token", token);
-            return "reset-password-view"; // Regresa a la vista mostrando el error
+            return "reset-password-view"; 
         }
 
-        // 2. Encriptar la nueva contraseña con BCrypt (indispensable para Spring
-        // Security)
         usuario.setPassword(passwordEncoder.encode(nuevaPassword));
-
-        // 3. Opcional: Limpiar el token para que no se pueda volver a reutilizar
         usuario.setToken(null);
-
-        // 4. PERSISTIR / GUARDAR en la base de datos (Esto genera el UPDATE)
         usuarioRepository.save(usuario);
 
-        // 5. Redirigir al login con un parámetro de éxito
         return "redirect:/login?resetSuccess=true";
     }
 
@@ -193,7 +181,6 @@ public class MainController {
             return "redirect:/login";
         }
 
-        // Validación si no se seleccionó ningún boleto
         if (boletoIds == null || boletoIds.isEmpty()) {
             redirectAttributes.addFlashAttribute("mensajeError", "Por favor selecciona al menos un boleto para apartar.");
             return "redirect:/rifas/" + rifaId;
@@ -245,7 +232,7 @@ public class MainController {
 
         boolean tienePendientes = totalPendiente.compareTo(BigDecimal.ZERO) > 0;
 
-        model.addAttribute("usuario", usuario); // <--- AGREGA ESTO
+        model.addAttribute("usuario", usuario); 
         model.addAttribute("compras", compras);
         model.addAttribute("totalPendiente", totalPendiente);
         model.addAttribute("tienePendientes", tienePendientes);
@@ -256,7 +243,6 @@ public class MainController {
 
     @GetMapping("/admin/rifas")
     public String adminRifas(Model model) {
-        // findAll() recupera todas las rifas sin importar su estado
         model.addAttribute("rifas", rifaRepository.findAll());
         model.addAttribute("nuevaRifa", new Rifa());
         return "admin-rifas";
@@ -277,13 +263,28 @@ public class MainController {
     }
 
     @PostMapping("/admin/rifas/guardar")
-    public String guardarRifa(@ModelAttribute("nuevaRifa") Rifa rifa) {
+    @Transactional
+    public String guardarRifa(@ModelAttribute("nuevaRifa") Rifa rifa,
+            @RequestParam(value = "imagenFile", required = false) MultipartFile imagenFile,
+            RedirectAttributes redirectAttributes) {
+
+        // Ajuste aplicado: Convertir el archivo subido directamente a Base64 para producción (Render)
+        if (imagenFile != null && !imagenFile.isEmpty()) {
+            try {
+                byte[] bytes = imagenFile.getBytes();
+                String base64Image = "data:image/png;base64," + Base64.getEncoder().encodeToString(bytes);
+                rifa.setImagenUrl(base64Image);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         if (rifa.getId() == null) {
             if (rifa.getEstado() == null || rifa.getEstado().isEmpty()) {
                 rifa.setEstado("ACTIVA");
             }
             Rifa guardada = rifaRepository.save(rifa);
-            
+
             for (int i = 1; i <= rifa.getTotalBoletos(); i++) {
                 Boleto b = new Boleto();
                 b.setNumeroBoleto(i);
@@ -292,22 +293,27 @@ public class MainController {
                 boletoRepository.save(b);
             }
         } else {
-            // Recuperamos la rifa de la base de datos para no perder propiedades obligatorias (como fechaSorteo)
             Rifa existente = rifaRepository.findById(rifa.getId())
                     .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
-            
+
             existente.setTitulo(rifa.getTitulo());
             existente.setDescripcion(rifa.getDescripcion());
             existente.setPrecioBoleto(rifa.getPrecioBoleto());
             existente.setTotalBoletos(rifa.getTotalBoletos());
-            existente.setImagenUrl(rifa.getImagenUrl());
+
+            // Solo actualiza la imagen si se subió una nueva; de lo contrario conserva la anterior
+            if (rifa.getImagenUrl() != null && !rifa.getImagenUrl().isEmpty()) {
+                existente.setImagenUrl(rifa.getImagenUrl());
+            }
+
             if (rifa.getEstado() != null && !rifa.getEstado().isEmpty()) {
                 existente.setEstado(rifa.getEstado());
             }
-            
+
             rifaRepository.save(existente);
         }
-        
+
+        redirectAttributes.addFlashAttribute("mensajeExito", "Rifa guardada correctamente.");
         return "redirect:/admin/rifas";
     }
 
@@ -316,19 +322,39 @@ public class MainController {
         Rifa rifa = rifaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
 
-        // Alterna correctamente entre ACTIVA y FINALIZADA respetando tu modelo
         rifa.setEstado("ACTIVA".equals(rifa.getEstado()) ? "FINALIZADA" : "ACTIVA");
-
         rifaRepository.save(rifa);
 
-        // Redirige de vuelta al panel de administración de rifas
         return "redirect:/admin/rifas";
     }
 
     @GetMapping("/admin/rifas/eliminar/{id}")
-    public String eliminarRifa(@PathVariable("id") Long id) {
-        rifaRepository.deleteById(id);
-        return "redirect:/";
+    @Transactional
+    public String eliminarRifa(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        try {
+            Rifa rifa = rifaRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
+
+            List<Boleto> boletos = boletoRepository.findByRifaIdOrderByNumeroBoletoAsc(id);
+            if (boletos != null && !boletos.isEmpty()) {
+                // Validar si algún boleto ya está comprado/asociado a una orden para evitar errores de FK
+                boolean tieneComprasAsociadas = boletos.stream()
+                        .anyMatch(b -> !"DISPONIBLE".equals(b.getEstado()));
+
+                if (tieneComprasAsociadas) {
+                    redirectAttributes.addFlashAttribute("mensajeError", "No se puede eliminar la rifa porque tiene boletos apartados o vendidos.");
+                    return "redirect:/admin/rifas";
+                }
+                
+                boletoRepository.deleteAll(boletos);
+            }
+
+            rifaRepository.delete(rifa);
+            redirectAttributes.addFlashAttribute("mensajeExito", "Rifa eliminada correctamente.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("mensajeError", "No se pudo eliminar la rifa debido a restricciones en la base de datos.");
+        }
+        return "redirect:/admin/rifas";
     }
 
     @GetMapping("/admin/compras")
@@ -362,26 +388,21 @@ public class MainController {
     public String validarPago(@PathVariable("id") @NonNull Long compraId, @RequestParam("estado") String estado) {
         Compra compra = compraRepository.findById(compraId).orElseThrow();
 
-        // --- INICIO DE LÓGICA DE REFERIDOS ---
         if ("PAGADO".equals(estado) && !"PAGADO".equals(compra.getEstadoPago())) {
             Usuario comprador = compra.getUsuario();
             if (comprador.getReferidoPor() != null) {
                 Usuario embajador = comprador.getReferidoPor();
 
-                // 1. Acumular el 10% del total
                 BigDecimal comision = compra.getMontoTotal().multiply(new BigDecimal("0.10"));
                 embajador.setSaldoMonedero(embajador.getSaldoMonedero().add(comision));
 
-                // 2. Verificar si alcanzó la meta de $150 y no estaba bloqueado
                 if (embajador.getSaldoMonedero().compareTo(new BigDecimal("150")) >= 0
                         && embajador.getFechaMetaCompletada() == null) {
                     embajador.setFechaMetaCompletada(LocalDateTime.now());
                 }
 
-                // 3. Incrementar contador de ventas si está bloqueado
                 if (embajador.isReclamoBloqueado()) {
                     embajador.setBoletosVendidosTrasBloqueo(embajador.getBoletosVendidosTrasBloqueo() + 1);
-                    // Si vendió 5, desbloqueamos
                     if (embajador.getBoletosVendidosTrasBloqueo() >= 5) {
                         embajador.setReclamoBloqueado(false);
                         embajador.setBoletosVendidosTrasBloqueo(0);
@@ -390,7 +411,6 @@ public class MainController {
                 usuarioRepository.save(embajador);
             }
         }
-        // --- FIN DE LÓGICA DE REFERIDOS ---
 
         compra.setEstadoPago(estado);
         compraRepository.save(compra);
@@ -417,7 +437,6 @@ public class MainController {
             return "redirect:/mis-compras";
         }
 
-        // Validar el tiempo de las 24 horas
         if (embajador.getFechaMetaCompletada() != null &&
                 embajador.getFechaMetaCompletada().isBefore(LocalDateTime.now().minusHours(24))) {
 
@@ -428,7 +447,6 @@ public class MainController {
             return "redirect:/mis-compras";
         }
 
-        // --- RESETEAR MONEDERO ---
         embajador.setSaldoMonedero(BigDecimal.ZERO);
         embajador.setFechaMetaCompletada(null);
         usuarioRepository.save(embajador);
@@ -448,7 +466,6 @@ public class MainController {
             return "redirect:/mis-compras";
         }
 
-        // Validar el tiempo de las 24 horas también para el boleto
         if (embajador.getFechaMetaCompletada() != null &&
                 embajador.getFechaMetaCompletada().isBefore(LocalDateTime.now().minusHours(24))) {
 
@@ -459,14 +476,12 @@ public class MainController {
             return "redirect:/mis-compras";
         }
 
-        // 1. Buscar la rifa seleccionada para cumplir con la relación obligatoria
         Rifa rifa = rifaRepository.findById(rifaId).orElse(null);
         if (rifa == null) {
             ra.addFlashAttribute("mensajeError", "La rifa seleccionada no es válida.");
             return "redirect:/mis-compras";
         }
 
-        // 2. Buscar exactamente UN boleto disponible en esa rifa
         Boleto boleto = boletoRepository.findByRifaIdAndEstadoOrderByNumeroBoletoAsc(rifaId, "DISPONIBLE")
         .stream()
         .findFirst()
@@ -477,23 +492,19 @@ public class MainController {
             return "redirect:/mis-compras";
         }
 
-        // 3. Crear el registro de Compra de cortesía (con montoTotal en 0 y su Rifa
-        // asociada)
         Compra compraCortesía = new Compra();
         compraCortesía.setUsuario(embajador);
         compraCortesía.setRifa(rifa);
         compraCortesía.setEstadoPago("CANJEADO");
         compraCortesía.setMontoTotal(BigDecimal.ZERO);
         compraCortesía.setFechaCompra(LocalDateTime.now());
-        compraCortesía.setBoletos(List.of(boleto)); // Asignamos el boleto a la lista de la compra
+        compraCortesía.setBoletos(List.of(boleto)); 
         compraCortesía = compraRepository.save(compraCortesía);
 
-        // 4. Actualizar el estado del boleto
         boleto.setEstado("CANJEADO");
         boleto.setUsuario(embajador);
         boletoRepository.save(boleto);
 
-        // 5. Resetear monedero del embajador
         embajador.setSaldoMonedero(BigDecimal.ZERO);
         embajador.setFechaMetaCompletada(null);
         usuarioRepository.save(embajador);
