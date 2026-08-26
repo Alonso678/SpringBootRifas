@@ -1,11 +1,14 @@
 package com.rifas.publicas.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Entity
 @Table(name = "rifas")
@@ -32,7 +35,8 @@ public class Rifa {
     @Column(nullable = false)
     private Integer totalBoletos;
 
-    @Column(name = "fecha_sorteo", nullable = false)
+    @NotNull(message = "La fecha del sorteo es obligatoria")
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") // <-- Esto le indica a Spring cómo leer la fecha que manda el input
     private LocalDateTime fechaSorteo;
 
     // Nuevo campo para almacenar el enlace del video del sorteo (YouTube, Vimeo, etc.)

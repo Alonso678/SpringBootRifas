@@ -6,6 +6,7 @@ import com.rifas.publicas.service.EmailService;
 
 import jakarta.validation.Valid;
 
+import org.hibernate.annotations.processing.SQL;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -302,6 +303,7 @@ public class MainController {
             existente.setDescripcion(rifa.getDescripcion());
             existente.setPrecioBoleto(rifa.getPrecioBoleto());
             existente.setTotalBoletos(rifa.getTotalBoletos());
+            existente.setFechaSorteo(rifa.getFechaSorteo());
 
             // Solo actualiza la imagen si se subió una nueva; de lo contrario conserva la anterior
             if (rifa.getImagenUrl() != null && !rifa.getImagenUrl().isEmpty()) {
@@ -346,8 +348,9 @@ public class MainController {
                 compraBoletosRepository.eliminarRechazadosPorRifaId(id);
                 compraRepository.eliminarComprasRechazadasPorRifaId(id);
 
-                // 3. Borramos los boletos asociados
-                boletoRepository.deleteAll(boletos);
+                // 3. LLAMADA OPTIMIZADA: Borra todos los boletos de golpe en una sola
+                // instrucción SQL
+                boletoRepository.eliminarBoletosPorRifa(id);
             }
 
             // 4. Finalmente borramos la rifa
