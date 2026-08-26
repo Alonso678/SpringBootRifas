@@ -268,6 +268,11 @@
                 <ul class="navbar-nav align-items-lg-center gap-2 mt-3 mt-lg-0 text-center text-lg-start">
     
                     <!-- Enlaces para usuarios autenticados -->
+                    <span class="text-light small" th:if="${#authorization.expression('isAuthenticated()')}">
+                        <i class="fa-solid fa-user text-warning me-1"></i>
+                        <span th:text="${#authentication.name}">Usuario</span>
+                    </span>
+                    
                     <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()')}">
                         <a class="nav-link text-light px-2" href="/mis-compras">
                             <i class="fa-solid fa-ticket me-1 text-warning"></i> Mis Boletos

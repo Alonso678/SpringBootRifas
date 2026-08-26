@@ -53,8 +53,19 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <body>
     <div th:fragment="content" class="container py-5">
-        <a href="/" class="btn btn-gold-outline mb-4 rounded-pill px-4 btn-sm fw-semibold"><i
-                class="fa-solid fa-arrow-left me-2"></i>Volver al Inicio</a>
+        <!-- Contenedor superior estilizado y alineado a la derecha sin pegar al borde -->
+        <div class="d-flex justify-content-end align-items-center gap-3 mb-4 pe-2">
+            <!-- Usuario autenticado -->
+            <span class="text-light small" th:if="${#authorization.expression('isAuthenticated()')}">
+                <i class="fa-solid fa-user text-warning me-1"></i>
+                <span th:text="${#authentication.name}">Usuario</span>
+            </span>
+        
+            <!-- Botón de Volver al Inicio -->
+            <a href="/" class="btn btn-gold-outline rounded-pill px-4 btn-sm fw-semibold mb-0">
+                <i class="fa-solid fa-arrow-left me-2"></i>Volver al Inicio
+            </a>
+        </div>
         
         <!-- Sección de Embajador y Monedero -->
         <div class="card bg-dark text-light mb-4 shadow-sm border border-warning border-opacity-50">
