@@ -251,20 +251,6 @@ public class MainController {
         return "admin-rifas";
     }
 
-    // @GetMapping("/admin/rifas/nuevo")
-    // public String formularioCrear(Model model) {
-    //     model.addAttribute("nuevaRifa", new Rifa());
-    //     return "admin/form";
-    // }
-
-    // @GetMapping("/admin/rifas/editar/{id}")
-    // public String formularioEditar(@PathVariable("id") Long id, Model model) {
-    //     Rifa rifa = rifaRepository.findById(id)
-    //             .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
-    //     model.addAttribute("nuevaRifa", rifa);
-    //     return "admin/form";
-    // }
-
     @PostMapping("/admin/rifas/guardar")
     @Transactional
     public String guardarRifa(@ModelAttribute("nuevaRifa") Rifa rifa,
@@ -305,7 +291,7 @@ public class MainController {
             existente.setTotalBoletos(rifa.getTotalBoletos());
             existente.setFechaSorteo(rifa.getFechaSorteo());
 
-            // Solo actualiza la imagen si se subió una nueva; de lo contrario conserva la anterior
+            // Si se subió un nuevo archivo, la variable 'rifa' ya contendrá el Base64 generado arriba y se actualizará
             if (rifa.getImagenUrl() != null && !rifa.getImagenUrl().isEmpty()) {
                 existente.setImagenUrl(rifa.getImagenUrl());
             }

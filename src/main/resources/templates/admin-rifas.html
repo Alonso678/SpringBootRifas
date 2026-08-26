@@ -266,8 +266,7 @@
         </div>
 
         <!-- MODAL ÚNICO PARA CREAR Y EDITAR RIFA -->
-        <div class="modal fade" id="modalCrearRifa" tabindex="-1" aria-labelledby="modalCrearRifaLabel"
-            aria-hidden="true">
+        <div class="modal fade" id="modalCrearRifa" tabindex="-1" aria-labelledby="modalCrearRifaLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content bg-dark border-secondary text-white shadow-lg">
                     <div class="modal-header border-secondary">
@@ -275,13 +274,15 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                             aria-label="Cerrar"></button>
                     </div>
-
-                    <form id="formRifaModal" th:action="@{/admin/rifas/guardar}" th:object="${nuevaRifa}" method="post">
+        
+                    <!-- CORRECCIÓN 1: Se agregó enctype="multipart/form-data" para permitir la subida de archivos -->
+                    <form id="formRifaModal" th:action="@{/admin/rifas/guardar}" th:object="${nuevaRifa}" method="post"
+                        enctype="multipart/form-data">
                         <!-- Campo oculto indispensable para mandar el ID al actualizar -->
                         <input type="hidden" id="rifaId" th:field="*{id}">
-                        <!-- Campo oculto para mantener el estado actual al editar -->
+                        <!-- Campo oculto para mantener el estado actual al editar / crear -->
                         <input type="hidden" id="rifaEstado" th:field="*{estado}">
-
+        
                         <div class="modal-body p-4">
                             <div class="mb-3">
                                 <label class="form-label text-light">Título</label>
@@ -291,8 +292,7 @@
                             <div class="mb-3">
                                 <label class="form-label text-light">Descripción</label>
                                 <textarea id="rifaDescripcion" th:field="*{descripcion}"
-                                    class="form-control bg-black text-light border-secondary" rows="3"
-                                    required></textarea>
+                                    class="form-control bg-black text-light border-secondary" rows="3" required></textarea>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label text-light">Precio por Boleto ($)</label>
@@ -315,12 +315,15 @@
                                     class="form-control bg-black text-light border-secondary"
                                     placeholder="https://www.youtube.com/watch?v=...">
                             </div>
+                            <!-- Selector de archivo para la imagen .png -->
                             <div class="mb-3">
-                                <label class="form-label text-light">URL de la Imagen (Opcional)</label>
-                                <input type="url" id="rifaImagenUrl" th:field="*{imagenUrl}"
-                                    class="form-control bg-black text-light border-secondary" placeholder="https://...">
+                                <label for="imagenFile" class="form-label text-warning">Imagen de la Rifa (.png)</label>
+                                <input type="file" class="form-control bg-dark text-light border-secondary" id="imagenFile"
+                                    name="imagenFile" accept="image/png">
+                                <div class="form-text text-muted small">Selecciona una imagen en formato PNG para la rifa.</div>
                             </div>
                         </div>
+        
                         <div class="modal-footer border-secondary">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSubmitModal">Crear Rifa y
