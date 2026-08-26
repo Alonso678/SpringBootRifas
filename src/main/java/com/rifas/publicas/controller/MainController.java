@@ -33,6 +33,7 @@ public class MainController {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final Compraboletosrepository compraBoletosRepository;
 
     // 1. Inyectamos la URL base desde el properties
     @Value("${app.base-url}")
@@ -40,13 +41,14 @@ public class MainController {
 
     public MainController(RifaRepository rifaRepository, BoletoRepository boletoRepository,
             CompraRepository compraRepository, UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder, EmailService emailService) {
+            PasswordEncoder passwordEncoder, EmailService emailService, Compraboletosrepository compraBoletosRepository) {
         this.rifaRepository = rifaRepository;
         this.boletoRepository = boletoRepository;
         this.compraRepository = compraRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.compraBoletosRepository = compraBoletosRepository;
     }
 
     @GetMapping("/")
@@ -248,19 +250,19 @@ public class MainController {
         return "admin-rifas";
     }
 
-    @GetMapping("/admin/rifas/nuevo")
-    public String formularioCrear(Model model) {
-        model.addAttribute("nuevaRifa", new Rifa());
-        return "admin/form";
-    }
+    // @GetMapping("/admin/rifas/nuevo")
+    // public String formularioCrear(Model model) {
+    //     model.addAttribute("nuevaRifa", new Rifa());
+    //     return "admin/form";
+    // }
 
-    @GetMapping("/admin/rifas/editar/{id}")
-    public String formularioEditar(@PathVariable("id") Long id, Model model) {
-        Rifa rifa = rifaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
-        model.addAttribute("nuevaRifa", rifa);
-        return "admin/form";
-    }
+    // @GetMapping("/admin/rifas/editar/{id}")
+    // public String formularioEditar(@PathVariable("id") Long id, Model model) {
+    //     Rifa rifa = rifaRepository.findById(id)
+    //             .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
+    //     model.addAttribute("nuevaRifa", rifa);
+    //     return "admin/form";
+    // }
 
     @PostMapping("/admin/rifas/guardar")
     @Transactional
@@ -317,17 +319,6 @@ public class MainController {
         return "redirect:/admin/rifas";
     }
 
-    @PostMapping("/admin/rifas/estatus/{id}")
-    public String cambiarEstatus(@PathVariable("id") Long id) {
-        Rifa rifa = rifaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
-
-        rifa.setEstado("ACTIVA".equals(rifa.getEstado()) ? "FINALIZADA" : "ACTIVA");
-        rifaRepository.save(rifa);
-
-        return "redirect:/admin/rifas";
-    }
-
     @GetMapping("/admin/rifas/eliminar/{id}")
     @Transactional
     public String eliminarRifa(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
@@ -337,22 +328,34 @@ public class MainController {
 
             List<Boleto> boletos = boletoRepository.findByRifaIdOrderByNumeroBoletoAsc(id);
             if (boletos != null && !boletos.isEmpty()) {
-                // Validar si algún boleto ya está comprado/asociado a una orden para evitar errores de FK
-                boolean tieneComprasAsociadas = boletos.stream()
-                        .anyMatch(b -> !"DISPONIBLE".equals(b.getEstado()));
 
-                if (tieneComprasAsociadas) {
-                    redirectAttributes.addFlashAttribute("mensajeError", "No se puede eliminar la rifa porque tiene boletos apartados o vendidos.");
+                // 1. Validar si hay boletos APARTADOS, PAGADOS u otros activos (Mensaje
+                // original requerido)
+                boolean tieneApartadosOPagados = boletos.stream()
+                        .anyMatch(b -> !"RECHAZADO".equalsIgnoreCase(b.getEstado())
+                                && !"DISPONIBLE".equalsIgnoreCase(b.getEstado()));
+
+                if (tieneApartadosOPagados) {
+                    redirectAttributes.addFlashAttribute("mensajeError",
+                            "No se puede eliminar la rifa porque tiene boletos apartados o pagados.");
                     return "redirect:/admin/rifas";
                 }
-                
+
+                // 2. Si solo tienen estados RECHAZADO o DISPONIBLE, limpiamos las tablas
+                // intermedias de forma segura
+                compraBoletosRepository.eliminarRechazadosPorRifaId(id);
+                compraRepository.eliminarComprasRechazadasPorRifaId(id);
+
+                // 3. Borramos los boletos asociados
                 boletoRepository.deleteAll(boletos);
             }
 
+            // 4. Finalmente borramos la rifa
             rifaRepository.delete(rifa);
             redirectAttributes.addFlashAttribute("mensajeExito", "Rifa eliminada correctamente.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("mensajeError", "No se pudo eliminar la rifa debido a restricciones en la base de datos.");
+            redirectAttributes.addFlashAttribute("mensajeError",
+                    "No se pudo eliminar la rifa debido a restricciones en la base de datos: " + e.getMessage());
         }
         return "redirect:/admin/rifas";
     }
