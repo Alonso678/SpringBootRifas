@@ -294,7 +294,7 @@ public class MainController {
             existente.setPrecioBoleto(rifa.getPrecioBoleto());
             existente.setTotalBoletos(rifa.getTotalBoletos());
             existente.setFechaSorteo(rifa.getFechaSorteo());
-
+            existente.setCostoPremio(rifa.getCostoPremio());
             // Si se subió un nuevo archivo, la variable 'rifa' ya contendrá el Base64 generado arriba y se actualizará
             if (rifa.getImagenUrl() != null && !rifa.getImagenUrl().isEmpty()) {
                 existente.setImagenUrl(rifa.getImagenUrl());

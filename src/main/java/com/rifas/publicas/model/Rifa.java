@@ -46,6 +46,9 @@ public class Rifa {
     @Column(nullable = false, length = 20)
     private String estado; // ACTIVA, FINALIZADA
 
+    @Column(name = "costo_premio")
+    private BigDecimal costoPremio;
+
     // --- Getters y Setters ---
 
     public Long getId() {
@@ -119,5 +122,13 @@ public class Rifa {
 
     public void setImagenUrl(String imagenUrl) {
         this.imagenUrl = imagenUrl;
+    }
+
+    public BigDecimal getCostoPremio() {
+        return costoPremio;
+    }
+
+    public void setCostoPremio(BigDecimal costoPremio) {
+        this.costoPremio = costoPremio;
     }
 }

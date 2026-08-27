@@ -1,0 +1,1 @@
+ALTER TABLE rifas ADD COLUMN costo_premio DECIMAL(12,2) DEFAULT 0.00;
