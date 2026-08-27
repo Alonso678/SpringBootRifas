@@ -3,6 +3,8 @@ package com.rifas.publicas.controller;
 import com.rifas.publicas.model.*;
 import com.rifas.publicas.repository.*;
 import com.rifas.publicas.service.EmailService;
+import com.rifas.publicas.sorteo.model.BoletoDigital;
+import com.rifas.publicas.sorteo.repository.BoletoDigitalRepository;
 
 import jakarta.validation.Valid;
 
@@ -35,6 +37,7 @@ public class MainController {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final Compraboletosrepository compraBoletosRepository;
+    private final BoletoDigitalRepository boletoDigitalRepository;
 
     // 1. Inyectamos la URL base desde el properties
     @Value("${app.base-url}")
@@ -42,7 +45,7 @@ public class MainController {
 
     public MainController(RifaRepository rifaRepository, BoletoRepository boletoRepository,
             CompraRepository compraRepository, UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder, EmailService emailService, Compraboletosrepository compraBoletosRepository) {
+            PasswordEncoder passwordEncoder, EmailService emailService, Compraboletosrepository compraBoletosRepository, BoletoDigitalRepository boletoDigitalRepository) {
         this.rifaRepository = rifaRepository;
         this.boletoRepository = boletoRepository;
         this.compraRepository = compraRepository;
@@ -50,6 +53,7 @@ public class MainController {
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.compraBoletosRepository = compraBoletosRepository;
+        this.boletoDigitalRepository = boletoDigitalRepository;
     }
 
     @GetMapping("/")
@@ -410,9 +414,26 @@ public class MainController {
         for (Boleto b : compra.getBoletos()) {
             if ("PAGADO".equals(estado)) {
                 b.setEstado("PAGADO");
+
+                // ---> GENERAR BOLETO DIGITAL AUTOMÁTICAMENTE <---
+                boolean yaExiste = boletoDigitalRepository.existsByBoletoId(b.getId());
+                if (!yaExiste) {
+                    BoletoDigital digital = new BoletoDigital();
+                    digital.setBoleto(b);
+                    digital.setFechaEmision(LocalDateTime.now());
+                    digital.setRandomState(java.util.UUID.randomUUID().toString()); // <--- Agrega esto
+                    digital.setSelloDigital("PENDIENTE_FIRMA"); // <--- O el valor que requiera tu lógica
+                    boletoDigitalRepository.save(digital);
+                }
+                // ------------------------------------------------
+
             } else {
                 b.setEstado("DISPONIBLE");
                 b.setUsuario(null);
+
+                // Opcional: si rechazan el pago, podrías eliminar el boleto digital si es que
+                // existía
+                boletoDigitalRepository.findByBoletoId(b.getId()).ifPresent(boletoDigitalRepository::delete);
             }
             boletoRepository.save(b);
         }
@@ -496,6 +517,17 @@ public class MainController {
         boleto.setEstado("CANJEADO");
         boleto.setUsuario(embajador);
         boletoRepository.save(boleto);
+
+        // ---> GENERAR BOLETO DIGITAL PARA CORTESÍA <---
+        if (!boletoDigitalRepository.existsByBoletoId(boleto.getId())) {
+            BoletoDigital digital = new BoletoDigital();
+            digital.setBoleto(boleto);
+            digital.setFechaEmision(LocalDateTime.now());
+            digital.setRandomState(java.util.UUID.randomUUID().toString()); // <--- Agrega esto
+            digital.setSelloDigital("PENDIENTE_FIRMA");
+            boletoDigitalRepository.save(digital);
+        }
+        // ----------------------------------------------
 
         embajador.setSaldoMonedero(BigDecimal.ZERO);
         embajador.setFechaMetaCompletada(null);

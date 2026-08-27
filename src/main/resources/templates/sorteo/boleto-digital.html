@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Boleto Digital Oficial</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div
+        class="bg-white border-2 border-indigo-100 shadow-xl rounded-2xl p-8 max-w-md w-full text-center relative overflow-hidden">
+
+        <!-- Encabezado -->
+        <h1 class="text-2xl font-bold text-slate-800">BOLETO DIGITAL OFICIAL</h1>
+        <p class="text-sm text-gray-500 mb-6">Rifa / Sorteo Público</p>
+
+        <hr class="border-t border-indigo-200 mb-6">
+
+        <!-- Detalles del Boleto -->
+        <div class="space-y-3 text-left mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
+            <div class="flex justify-between">
+                <span class="font-semibold text-slate-700">Número de Boleto:</span>
+                <span class="text-indigo-600 font-bold text-lg" th:text="'# ' + ${boleto.numeroBoleto}"># 00</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="font-semibold text-slate-700">ID de Registro:</span>
+                <span class="text-gray-600" th:text="${boletoDigital.id}">1</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="font-semibold text-slate-700">Fecha de Emisión:</span>
+                <span class="text-gray-600"
+                    th:text="${#temporals.format(boletoDigital.fechaEmision, 'dd/MM/yyyy HH:mm')}">01/01/2026</span>
+            </div>
+        </div>
+
+        <hr class="border-t border-dashed border-gray-300 mb-6">
+
+        <!-- Código QR -->
+        <div class="flex justify-center mb-6">
+            <img th:src="${qrCode}" alt="Código QR del Boleto"
+                class="w-36 h-36 object-contain border p-2 rounded-lg bg-white shadow-sm">
+        </div>
+
+        <p class="text-xs text-gray-400 mb-6">
+            Este boleto cuenta con un sello criptográfico integrado en el código QR para su validación oficial.
+        </p>
+
+        <!-- Botón de Descarga PDF -->
+        <div>
+            <a th:href="@{'/boleto/digital/' + ${boleto.id} + '/pdf'}"
+                class="inline-block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-200">
+                📥 Descargar en PDF
+            </a>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

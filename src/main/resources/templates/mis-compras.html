@@ -162,6 +162,29 @@
                                     th:classappend="${c.estadoPago == 'PAGADO' ? 'bg-success text-white' : (c.estadoPago == 'CANJEADO' ? 'bg-info text-dark' : (c.estadoPago == 'PENDIENTE' ? 'bg-warning text-dark' : 'bg-danger text-white'))}"
                                     th:text="${c.estadoPago == 'CANJEADO' ? 'CANJEADO (Cortesía)' : c.estadoPago}">PENDIENTE</span>
                             </td>
+                            <!-- Columna de Acciones para visualización y descarga del boleto digital -->
+                            <td class="text-center">
+                                <!-- Se muestra solo si la compra está PAGADA o CANJEADA -->
+                                <div th:if="${c.estadoPago == 'PAGADO' or c.estadoPago == 'CANJEADO'}">
+                                    <!-- Iteramos sobre los boletos para dar la opción de ver el boleto digital web -->
+                                    <div th:each="b : ${c.boletos}" class="mb-1 d-flex justify-content-center gap-1">
+                                        <!-- Botón para VISUALIZAR en la web -->
+                                        <a th:href="@{/boleto/digital/{id}(id=${b.id})}" class="btn btn-sm btn-outline-warning py-0 px-2 fs-7"
+                                            target="_blank" title="Ver Boleto Digital">
+                                            <i class="fa-solid fa-eye me-1"></i> Ver <span th:text="${b.numeroBoleto}"></span>
+                                        </a>
+                            
+                                        <!-- Botón opcional para DESCARGAR directo en PDF -->
+                                        <a th:href="@{/boleto/digital/{id}/pdf(id=${b.id})}" class="btn btn-sm btn-outline-light py-0 px-1 fs-7"
+                                            target="_blank" title="Descargar PDF">
+                                            <i class="fa-solid fa-file-pdf"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <span th:unless="${c.estadoPago == 'PAGADO' or c.estadoPago == 'CANJEADO'}" class="text-muted small">
+                                    -
+                                </span>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
