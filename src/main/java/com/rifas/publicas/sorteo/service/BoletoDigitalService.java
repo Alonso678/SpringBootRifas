@@ -269,7 +269,7 @@ public class BoletoDigitalService {
     // }
 
 
-    private BoletoDigital obtenerOCrearBoletoDigital(Long boletoId) {
+    public BoletoDigital obtenerOCrearBoletoDigital(Long boletoId) {
         return boletoDigitalRepository.findByBoletoId(boletoId).orElseGet(() -> {
             Boleto boleto = boletoRepository.findById(boletoId)
                     .orElseThrow(() -> new RuntimeException("Boleto no encontrado"));

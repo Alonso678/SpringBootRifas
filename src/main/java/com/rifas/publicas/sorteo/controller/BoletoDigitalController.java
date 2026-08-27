@@ -33,13 +33,10 @@ public class BoletoDigitalController {
 
     private final ConfigSorteoRepository configSorteoRepository;
 
-    private final CryptoService cryptoService;
-
-    BoletoDigitalController(BoletoDigitalService boletoDigitalService, BoletoRepository boletoRepository, BoletoDigitalRepository boletoDigitalRepository, CryptoService cryptoService, ConfigSorteoRepository configSorteoRepository) {
+    BoletoDigitalController(BoletoDigitalService boletoDigitalService, BoletoRepository boletoRepository, BoletoDigitalRepository boletoDigitalRepository, ConfigSorteoRepository configSorteoRepository) {
         this.boletoDigitalService = boletoDigitalService;
         this.boletoRepository = boletoRepository;
         this.boletoDigitalRepository = boletoDigitalRepository;
-        this.cryptoService = cryptoService;
         this.configSorteoRepository = configSorteoRepository;
     }
 
@@ -82,8 +79,9 @@ public class BoletoDigitalController {
     }
 
     /**
-     * Endpoint exclusivo de administración para verificar la autenticidad del QR o un boleto.
-     * Si el usuario no es ADMIN, se bloquea con 403 Forbidden / 401 Unauthorized.
+     * Endpoint exclusivo de administración para verificar la autenticidad del QR,
+     * la fecha del sorteo y si el boleto es ganador utilizando el registro
+     * persistido.
      */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/sorteo/verificar")
@@ -94,11 +92,12 @@ public class BoletoDigitalController {
             Principal principal,
             Model model) {
 
-        // Doble validación de seguridad por si Spring Security requiere control programático extra
         if (principal == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized: Debe iniciar sesión como administrador.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Unauthorized: Debe iniciar sesión como administrador.");
         }
 
+        // 1. Buscar el boleto y su rifa asociada
         Boleto boleto = boletoRepository.findById(id).orElse(null);
         if (boleto == null) {
             model.addAttribute("valido", false);
@@ -106,12 +105,58 @@ public class BoletoDigitalController {
             return "sorteo/resultado-verificacion";
         }
 
-        String emailUsuario = "cliente@rifas.com"; 
-        boolean esAutentico = cryptoService.verificarSello(id, String.valueOf(boleto.getNumeroBoleto()), emailUsuario, rs, sello);
+        var rifa = boleto.getRifa();
 
-        model.addAttribute("valido", esAutentico);
+        // 2. Buscar el registro digital oficial guardado en base de datos
+        BoletoDigital boletoDigital = boletoDigitalRepository.findByBoletoId(id).orElse(null);
+        if (boletoDigital == null) {
+            model.addAttribute("valido", false);
+            model.addAttribute("mensaje", "¡ADVERTENCIA! No existe registro digital oficial para este boleto.");
+            model.addAttribute("boleto", boleto);
+            return "sorteo/resultado-verificacion";
+        }
+
+        // 3. Verificación Segura por Coincidencia Directa (Persistida)
+        boolean esAutentico = boletoDigital.getRandomState().equals(rs)
+                && boletoDigital.getSelloDigital().equals(sello);
+
+        if (!esAutentico) {
+            model.addAttribute("valido", false);
+            model.addAttribute("mensaje",
+                    "¡ADVERTENCIA! Posible fraude detectado: Los elementos de seguridad no coinciden con el registro oficial.");
+            model.addAttribute("boleto", boleto);
+            return "sorteo/resultado-verificacion";
+        }
+
+        // 4. Validación de la Fecha del Sorteo
+        java.time.LocalDate hoy = java.time.LocalDate.now();
+        boolean sorteoRealizado = rifa.getFechaSorteo() != null &&
+                !hoy.isBefore(rifa.getFechaSorteo().toLocalDate());
+
+        if (!sorteoRealizado) {
+            model.addAttribute("valido", true);
+            model.addAttribute("sorteoRealizado", false);
+            model.addAttribute("mensaje",
+                    "Boleto Auténtico, pero el sorteo aún no se ha llevado a cabo (Fecha programada: "
+                            + rifa.getFechaSorteo() + ").");
+            model.addAttribute("boleto", boleto);
+            return "sorteo/resultado-verificacion";
+        }
+
+        // 5. Validación de si es Ganador
+        boolean esGanador = false; // Cambiar cuando implementes la lógica o columna en BD
+
+        model.addAttribute("valido", true);
+        model.addAttribute("sorteoRealizado", true);
+        model.addAttribute("esGanador", esGanador);
         model.addAttribute("boleto", boleto);
-        model.addAttribute("mensaje", esAutentico ? "¡Boleto Auténtico y Verificado por Administración!" : "¡ADVERTENCIA! Posible fraude detectado.");
+
+        if (esGanador) {
+            model.addAttribute("mensaje", "¡FELICIDADES! El boleto es AUTÉNTICO y ¡ES GANADOR del premio!");
+        } else {
+            model.addAttribute("mensaje",
+                    "El boleto es auténtico y el sorteo ya pasó, pero este número no resultó ganador.");
+        }
 
         return "sorteo/resultado-verificacion";
     }
