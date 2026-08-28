@@ -33,6 +33,18 @@
             </div>
         </div>
 
+        <!-- Switch de Modos -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">Modo de Sorteo:</label>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="switchModoManual"
+                    th:checked="${modoManual != null and modoManual}">
+                <label class="form-check-label" for="switchModoManual">
+                    Modo Manual (Selección en lista)
+                </label>
+            </div>
+        </div>
+
         <!-- Formulario para configurar el bloque -->
         <div class="card bg-secondary text-white mb-4 shadow">
             <div class="card-body">
@@ -40,10 +52,12 @@
                 <form th:action="@{/admin/sorteos/{id}/ejecutar(id=${rifa.id})}" method="post"
                     class="row g-3 align-items-center mt-2">
                     <div class="col-auto">
-                        <label for="intervalo" class="col-form-label">Determinar ganador a los:</label>
+                        <label for="selectIntervalo" class="col-form-label">Determinar ganador a los:</label>
                     </div>
                     <div class="col-auto">
-                        <select id="intervalo" name="intervalo" class="form-select bg-dark text-white border-warning">
+                        <!-- Se cambió el id a selectIntervalo para que empate con el JS -->
+                        <select id="selectIntervalo" name="intervalo"
+                            class="form-select bg-dark text-white border-warning">
                             <option value="5" th:selected="${intervaloSeleccionado == 5}">5 boletos (4 descartados
                                 aleatorios, 1 ganador)</option>
                             <option value="10" th:selected="${intervaloSeleccionado == 10}">10 boletos (9 descartados
@@ -52,7 +66,7 @@
                                 aleatorios, 1 ganador)</option>
                         </select>
                     </div>
-                    <div class="col-auto">
+                    <div id="contenedorBotonAutomatico" class="col-auto">
                         <button type="submit" class="btn btn-warning fw-bold">
                             <i class="fa-solid fa-dice me-1"></i> Sacar Siguiente (Descartar / Sortear)
                         </button>
@@ -120,16 +134,22 @@
             <!-- Listado General de Boletos Participantes -->
             <div class="col-md-6">
                 <div class="card bg-black border-secondary text-white shadow h-100">
-                    <div class="card-header bg-secondary text-white fw-bold">
-                        <i class="fa-solid fa-users"></i> Listado General de Boletos Pagados
+                    <div class="card-header bg-secondary text-white fw-bold d-flex justify-content-between align-items-center">
+                        <div><i class="fa-solid fa-users"></i> Listado General de Boletos Pagados</div>
+                        <!-- Contenedor del buscador (solo visible en modo manual) -->
+                        <div id="contenedorBuscador" style="display: none; width: 45%;">
+                            <input type="text" id="buscadorBoletos" class="form-control form-control-sm" placeholder="Buscar boleto #...">
+                        </div>
                     </div>
                     <div class="card-body p-0 table-responsive" style="max-height: 250px; overflow-y: auto;">
-                        <table class="table table-dark table-sm align-middle mb-0">
+                        <table id="tablaBoletosGeneral" class="table table-dark table-sm align-middle mb-0">
                             <thead>
                                 <tr>
                                     <th>Núm</th>
                                     <th>Comprador</th>
                                     <th>Estado</th>
+                                    <!-- Nueva columna para modo manual -->
+                                    <th class="columna-accion-manual" style="display: none;">Acción</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -142,6 +162,16 @@
                                         <span th:if="${boleto.estado == 'PAGADO'}"
                                             class="badge bg-primary">PARTICIPANTE</span>
                                     </td>
+                                    <!-- Celda para el botón manual -->
+                                    <td class="columna-accion-manual" style="display: none;">
+                                        <form th:action="@{/admin/sorteos/{id}/ejecutar-manual(id=${rifa.id})}" method="post">
+                                            <input type="hidden" name="intervalo" th:value="${intervaloSeleccionado}" th:id="'hiddenIntervaloManual_' + ${boleto.id}">
+                                            <input type="hidden" name="boletoId" th:value="${boleto.id}">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                Seleccionar
+                                            </button>
+                                        </form>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -151,6 +181,75 @@
         </div>
 
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const switchModo = document.getElementById('switchModoManual');
+            const contenedorAuto = document.getElementById('contenedorBotonAutomatico');
+            const columnasManual = document.querySelectorAll('.columna-accion-manual');
+            const selectIntervalo = document.getElementById('selectIntervalo');
+            
+            // Elementos del buscador
+            const contenedorBuscador = document.getElementById('contenedorBuscador');
+            const buscadorBoletos = document.getElementById('buscadorBoletos');
+            const filasBoletos = document.querySelectorAll('#tablaBoletosGeneral tbody tr');
+
+            function aplicarModo() {
+                if (switchModo.checked) {
+                    // MODO MANUAL
+                    contenedorAuto.style.display = 'none';
+                    contenedorBuscador.style.display = 'block'; // Mostrar buscador
+                    columnasManual.forEach(col => col.style.display = 'table-cell');
+                } else {
+                    // MODO AUTOMÁTICO
+                    contenedorAuto.style.display = 'block';
+                    contenedorBuscador.style.display = 'none'; // Ocultar buscador
+                    columnasManual.forEach(col => col.style.display = 'none');
+                    
+                    // Limpiar el buscador al salir del modo manual
+                    if (buscadorBoletos) {
+                        buscadorBoletos.value = '';
+                        buscadorBoletos.dispatchEvent(new Event('input')); // Disparar evento para restablecer tabla
+                    }
+                }
+            }
+
+            function sincronizarIntervalo() {
+                const valorActual = selectIntervalo.value;
+                const inputsOcultos = document.querySelectorAll('input[id^="hiddenIntervaloManual_"]');
+                inputsOcultos.forEach(input => input.value = valorActual);
+            }
+
+            // Lógica de filtrado en tiempo real
+            if (buscadorBoletos) {
+                buscadorBoletos.addEventListener('input', function() {
+                    // Quitar el símbolo '#' por si el usuario lo escribe, y pasar a minúsculas
+                    const term = this.value.toLowerCase().replace('#', '').trim();
+                    
+                    filasBoletos.forEach(fila => {
+                        const numBoleto = fila.querySelector('td:first-child').textContent.toLowerCase().replace('#', '');
+                        const nombreUser = fila.querySelector('td:nth-child(2)').textContent.toLowerCase();
+
+                        // Si el texto coincide con el número o el nombre, mostrar la fila
+                        if(numBoleto.includes(term) || nombreUser.includes(term)) {
+                            fila.style.display = '';
+                        } else {
+                            fila.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            switchModo.addEventListener('change', aplicarModo);
+            if (selectIntervalo) {
+                selectIntervalo.addEventListener('change', sincronizarIntervalo);
+            }
+
+            // Inicializar el estado
+            aplicarModo();
+            if (selectIntervalo) sincronizarIntervalo();
+        });
+    </script>
 </body>
 
 </html>

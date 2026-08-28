@@ -138,4 +138,74 @@ public class AdminSorteoController {
         model.addAttribute("descartadosBloque", descartadosBloque);
         model.addAttribute("intervaloSeleccionado", intervalo);
     }
+
+    @PostMapping("/{id}/ejecutar-manual")
+    public String ejecutarSorteoBloqueManual(@PathVariable Long id,
+            @RequestParam int intervalo,
+            @RequestParam Long boletoId,
+            HttpSession session,
+            Model model) {
+        Rifa rifa = rifaRepository.findById(id).orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
+
+        // Buscar el boleto específico que se seleccionó manualmente
+        Boleto seleccionado = boletoRepository.findById(boletoId)
+                .orElseThrow(() -> new RuntimeException("Boleto no encontrado"));
+
+        // Validar que el boleto siga pagado (por si hay un doble clic accidental)
+        if (!"PAGADO".equals(seleccionado.getEstado())) {
+            return "redirect:/admin/sorteos/" + id + "?error=boleto_invalido";
+        }
+
+        String sessionKeyDescartados = "idsDescartados_" + id;
+        @SuppressWarnings("unchecked")
+        List<Long> idsDescartados = (List<Long>) session.getAttribute(sessionKeyDescartados);
+        if (idsDescartados == null) {
+            idsDescartados = new ArrayList<>();
+        }
+
+        Boleto ganadorBloque = null;
+        Boleto ultimoDescartado = null;
+
+        // Lógica del bloque (igual que el automático)
+        if (idsDescartados.size() == intervalo - 1) {
+            ganadorBloque = seleccionado;
+            ganadorBloque.setEstado("GANADOR");
+            boletoRepository.save(ganadorBloque);
+            session.removeAttribute(sessionKeyDescartados);
+        } else {
+            seleccionado.setEstado("DESCARTADO");
+            boletoRepository.save(seleccionado);
+
+            idsDescartados.add(seleccionado.getId());
+            session.setAttribute(sessionKeyDescartados, idsDescartados);
+            ultimoDescartado = seleccionado;
+        }
+
+        // Construir la lista de descartados respetando el orden
+        List<Boleto> descartadosBloque = new ArrayList<>();
+        List<Boleto> todosLosDescartadosBD = boletoRepository.findByRifaIdAndEstadoOrderByNumeroBoletoAsc(id,
+                "DESCARTADO");
+
+        for (Long idDesc : idsDescartados) {
+            for (Boleto b : todosLosDescartadosBD) {
+                if (b.getId().equals(idDesc)) {
+                    descartadosBloque.add(b);
+                    break;
+                }
+            }
+        }
+
+        model.addAttribute("rifa", rifa);
+        model.addAttribute("boletosPagados",
+                boletoRepository.findByRifaIdAndEstadoOrderByNumeroBoletoAsc(id, "PAGADO"));
+        model.addAttribute("descartadosBloque", descartadosBloque);
+        model.addAttribute("ganadorBloque", ganadorBloque);
+        model.addAttribute("ultimoDescartado", ultimoDescartado);
+        model.addAttribute("numeroDescarteActual", idsDescartados.size());
+        model.addAttribute("intervaloSeleccionado", intervalo);
+        // Bandera para que la vista recuerde que estábamos en modo manual
+        model.addAttribute("modoManual", true);
+
+        return "sorteo/admin-sorteo-panel";
+    }
 }
