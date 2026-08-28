@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Sorteo por Bloques</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-dark text-white">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-warning fw-bold">
+                <i class="fa-solid fa-trophy me-2"></i> Panel de Sorteo por Bloques
+            </h1>
+            <a href="/admin/sorteos" class="btn btn-outline-light">
+                <i class="fa-solid fa-arrow-left me-1"></i> Volver
+            </a>
+        </div>
+
+        <!-- Información de la Rifa -->
+        <div class="card bg-black border-secondary text-white mb-4 shadow">
+            <div class="card-body">
+                <h3 class="card-title text-warning" th:text="${rifa.titulo}">Título de la Rifa</h3>
+                <p class="card-text text-muted" th:text="${rifa.descripcion}">Descripción...</p>
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>Boletos Pagados Totales:</strong> <span class="badge bg-info text-dark"
+                                th:text="${#lists.size(boletosPagados)}">0</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario para configurar el bloque -->
+        <div class="card bg-secondary text-white mb-4 shadow">
+            <div class="card-body">
+                <h5>Configurar Meta del Bloque</h5>
+                <form th:action="@{/admin/sorteos/{id}/ejecutar(id=${rifa.id})}" method="post"
+                    class="row g-3 align-items-center mt-2">
+                    <div class="col-auto">
+                        <label for="intervalo" class="col-form-label">Determinar ganador a los:</label>
+                    </div>
+                    <div class="col-auto">
+                        <select id="intervalo" name="intervalo" class="form-select bg-dark text-white border-warning">
+                            <option value="5" th:selected="${intervaloSeleccionado == 5}">5 boletos (4 descartados
+                                aleatorios, 1 ganador)</option>
+                            <option value="10" th:selected="${intervaloSeleccionado == 10}">10 boletos (9 descartados
+                                aleatorios, 1 ganador)</option>
+                            <option value="15" th:selected="${intervaloSeleccionado == 15}">15 boletos (14 descartados
+                                aleatorios, 1 ganador)</option>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-warning fw-bold">
+                            <i class="fa-solid fa-dice me-1"></i> Sacar Siguiente (Descartar / Sortear)
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Banner de Ganador (Si aplica) -->
+        <div th:if="${ganadorBloque != null}" class="alert alert-success border-success text-black shadow mb-4">
+            <h3 class="fw-bold"><i class="fa-solid fa-award"></i> ¡YA TENEMOS GANADOR DEL BLOQUE!</h3>
+            <p class="mb-1 fs-5">Boleto Afortunado: <strong th:text="'#' + ${ganadorBloque.numeroBoleto}"></strong></p>
+            <p class="mb-0">Comprador: <strong
+                    th:text="${ganadorBloque.usuario != null ? ganadorBloque.usuario.nombre : 'N/A'}"></strong> (<span
+                    th:text="${ganadorBloque.usuario != null ? ganadorBloque.usuario.email : ''}"></span>)</p>
+        </div>
+
+        <!-- Banner de Último Descarte (Si aplica) -->
+        <div th:if="${ultimoDescartado != null}" class="alert alert-danger border-danger text-black shadow mb-4">
+            <h4 class="fw-bold"><i class="fa-solid fa-ban"></i>
+                <span
+                    th:text="${numeroDescarteActual == 1 ? '1er' : (numeroDescarteActual == 2 ? '2do' : (numeroDescarteActual == 3 ? '3er' : numeroDescarteActual + 'to'))}"></span>
+                BOLETO DESCARTADO
+            </h4>
+            <p class="mb-1 fs-5">Boleto Eliminado: <strong th:text="'#' + ${ultimoDescartado.numeroBoleto}"></strong>
+            </p>
+            <p class="mb-0">Participante: <strong
+                    th:text="${ultimoDescartado.usuario != null ? ultimoDescartado.usuario.nombre : 'N/A'}"></strong>
+            </p>
+        </div>
+
+        <div class="row mb-4">
+            <!-- Descartados acumulados en el bloque actual (En orden de salida) -->
+            <div class="col-md-6">
+                <div class="card bg-black border-secondary text-white shadow h-100">
+                    <div class="card-header bg-secondary text-white fw-bold">
+                        <i class="fa-solid fa-ban"></i> Boletos Descartados en este Bloque (<span
+                            th:text="${#lists.size(descartadosBloque)}">0</span>)
+                    </div>
+                    <div class="card-body p-0 table-responsive">
+                        <table class="table table-dark table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Orden</th>
+                                    <th>Núm</th>
+                                    <th>Participante</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(descartadosBloque)}">
+                                    <td colspan="3" class="text-center text-muted">Aún no hay descartes en este bloque.
+                                    </td>
+                                </tr>
+                                <tr th:each="desc, iterStat : ${descartadosBloque}">
+                                    <td class="text-warning fw-bold" th:text="${iterStat.count + '°'}">1°</td>
+                                    <td class="text-danger fw-bold" th:text="${'#' + desc.numeroBoleto}">#</td>
+                                    <td th:text="${desc.usuario != null ? desc.usuario.nombre : 'N/A'}">Usuario</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Listado General de Boletos Participantes -->
+            <div class="col-md-6">
+                <div class="card bg-black border-secondary text-white shadow h-100">
+                    <div class="card-header bg-secondary text-white fw-bold">
+                        <i class="fa-solid fa-users"></i> Listado General de Boletos Pagados
+                    </div>
+                    <div class="card-body p-0 table-responsive" style="max-height: 250px; overflow-y: auto;">
+                        <table class="table table-dark table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Núm</th>
+                                    <th>Comprador</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="boleto : ${boletosPagados}">
+                                    <td class="fw-bold text-warning" th:text="${'#' + boleto.numeroBoleto}">#</td>
+                                    <td th:text="${boleto.usuario != null ? boleto.usuario.nombre : 'N/A'}">Usuario</td>
+                                    <td>
+                                        <span th:if="${boleto.estado == 'GANADOR'}"
+                                            class="badge bg-success">GANADOR</span>
+                                        <span th:if="${boleto.estado == 'PAGADO'}"
+                                            class="badge bg-primary">PARTICIPANTE</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>

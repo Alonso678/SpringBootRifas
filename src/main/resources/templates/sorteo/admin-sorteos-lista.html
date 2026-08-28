@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Sorteos - FortunaRifas</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-black text-white">
+
+    <div class="container py-5">
+        <!-- Encabezado -->
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-8">
+                <h2 class="fw-bold text-warning"><i class="fa-solid fa-trophy me-2"></i> Seleccionar Rifa para Sorteo
+                </h2>
+                <p class="text-muted small">Elige el sorteo que deseas gestionar y ejecutar.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a th:href="@{/admin/rifas}" class="btn btn-outline-light btn-sm">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Volver al Panel
+                </a>
+            </div>
+        </div>
+
+        <!-- Listado de Rifas -->
+        <div class="row g-4">
+            <div class="col-md-4" th:each="rifa : ${rifas}">
+                <div class="card bg-dark border-secondary text-white h-100 shadow-sm overflow-hidden">
+                    <!-- Imagen del Artículo usando 'imagenUrl' en Base64 -->
+                    <div class="bg-black text-center"
+                        style="height: 180px; display: flex; align-items: center; justify-content: center;">
+                        <img th:if="${rifa.imagenUrl != null and !rifa.imagenUrl.isEmpty()}" th:src="${rifa.imagenUrl}"
+                            class="img-fluid h-100 w-100 object-fit-cover" alt="Imagen del artículo">
+                        <!-- Imagen por defecto si no tiene -->
+                        <div th:unless="${rifa.imagenUrl != null and !rifa.imagenUrl.isEmpty()}" class="text-muted">
+                            <i class="fa-solid fa-image fa-3x"></i>
+                        </div>
+                    </div>
+
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <h5 class="card-title fw-bold text-warning" th:text="${rifa.titulo}">Título de la Rifa</h5>
+                            <p class="card-text text-muted small mb-3" th:text="${rifa.descripcion}">Descripción...</p>
+                        </div>
+                        <div>
+                            <a th:href="@{/admin/sorteos/{id}(id=${rifa.id})}" class="btn btn-warning w-100 fw-bold">
+                                <i class="fa-solid fa-play me-1"></i> Iniciar Sorteo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+</body>
+
+</html>
