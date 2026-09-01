@@ -6,6 +6,7 @@
     <!-- Enlace robusto a Bootstrap (local con respaldo por CDN) -->
     <link th:href="@{/css/bootstrap.min.css}" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             background-color: #0b0f19;
@@ -103,43 +104,84 @@
 
             <div th:if="${mensajeError}" class="alert alert-danger py-2 small text-center border-0 shadow-sm" th:text="${mensajeError}"></div>
 
-            <form th:action="@{/registro}" th:object="${usuario}" method="post">
+            <form th:action="@{/registro}" th:object="${usuario}" method="post" novalidate>
+                <!-- Nombre Completo -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold small text-muted">Nombre Completo</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
-                        <input type="text" th:field="*{nombre}" class="form-control" placeholder="Tu nombre" required>
+                        <input type="text" th:field="*{nombre}" id="nombre" class="form-control" placeholder="Tu nombre">
                     </div>
+                    <!-- Banner individual del servidor -->
+                    <div th:if="${#fields.hasErrors('nombre')}" class="alert alert-danger py-1 px-2 small mt-1 mb-0 border-0 shadow-sm" th:errors="*{nombre}"></div>
+                    <!-- Banner individual del cliente (JS) -->
+                    <div id="error-nombre" class="alert alert-danger py-1 px-2 small mt-1 mb-0 border-0 shadow-sm" style="display: none;">El nombre completo es obligatorio.</div>
                 </div>
 
+                <!-- Correo Electrónico -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold small text-muted">Correo Electrónico</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
-                        <input type="email" th:field="*{email}" class="form-control" placeholder="tucorreo@email.com" required>
+                        <input type="email" th:field="*{email}" id="email" class="form-control" placeholder="tucorreo@email.com">
                     </div>
+                    <div th:if="${#fields.hasErrors('email')}" class="alert alert-danger py-1 px-2 small mt-1 mb-0 border-0 shadow-sm" th:errors="*{email}"></div>
+                    <div id="error-email" class="alert alert-danger py-1 px-2 small mt-1 mb-0 border-0 shadow-sm" style="display: none;">El correo electrónico es obligatorio.</div>
                 </div>
 
+                <!-- Teléfono / WhatsApp -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold small text-muted">Teléfono / WhatsApp</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
                         <input type="text" th:field="*{telefono}" id="telefono" class="form-control" placeholder="10 dígitos"
-                            maxlength="10" pattern="[0-9]{10}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);"
-                            required>
+                            maxlength="10" pattern="[0-9]{10}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);">
                     </div>
                     <div class="form-text text-muted" style="font-size: 0.75rem;">Ingresa solo 10 números sin espacios ni guiones.</div>
+                    <div th:if="${#fields.hasErrors('telefono')}" class="alert alert-danger py-1 px-2 small mt-1 mb-0 border-0 shadow-sm" th:errors="*{telefono}"></div>
+                    <div id="error-telefono" class="alert alert-danger py-1 px-2 small mt-1 mb-0 border-0 shadow-sm" style="display: none;">El teléfono debe contener exactamente 10 dígitos.</div>
                 </div>
 
+                <!-- Contraseña -->
                 <div class="mb-4">
                     <label class="form-label fw-semibold small text-muted">Contraseña</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
-                        <input type="password" th:field="*{password}" class="form-control" placeholder="••••••••" required>
+                        <input type="password" th:field="*{password}" id="password" class="form-control" placeholder="••••••••">
+                    </div>
+                    <div th:if="${#fields.hasErrors('password')}" class="alert alert-danger py-1 px-2 small mt-1 mb-0 border-0 shadow-sm" th:errors="*{password}"></div>
+                    <div id="error-password" class="alert alert-danger py-1 px-2 small mt-1 mb-0 border-0 shadow-sm" style="display: none;">La contraseña es obligatoria.</div>
+                </div>
+
+                <!-- Sección de Acuerdos Legales (Limpios sin banners estáticos) -->
+                <div class="mb-4 mt-4 p-3 border rounded" style="background: rgba(226, 232, 240, 0.6); border-color: rgba(148, 163, 184, 0.6) !important;">
+                    <h6 class="mb-3 fw-bold" style="color: #1e293b !important;">
+                        <i class="fa-solid fa-scale-balanced text-warning me-2"></i>Acuerdos Legales Obligatorios
+                    </h6>
+                
+                    <!-- Checkbox Términos y Condiciones -->
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="aceptaTerminos" name="aceptaTerminos" style="border-color: #94a3b8;">
+                        <label class="form-check-label small" for="aceptaTerminos" style="color: #1e293b !important;">
+                            He leído y acepto los
+                            <a th:href="@{/terminos-y-condiciones}" href="/terminos-y-condiciones" target="_blank" class="text-warning text-decoration-none fw-bold">
+                                Términos y Condiciones
+                            </a>.
+                        </label>
+                    </div>
+                
+                    <!-- Checkbox Aviso de Privacidad -->
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="aceptaPrivacidad" name="aceptaPrivacidad" style="border-color: #94a3b8;">
+                        <label class="form-check-label small" for="aceptaPrivacidad" style="color: #1e293b !important;">
+                            He leído y acepto el
+                            <a th:href="@{/aviso-de-privacidad}" href="/aviso-de-privacidad" target="_blank" class="text-warning text-decoration-none fw-bold">
+                                Aviso de Privacidad
+                            </a> para el tratamiento de mis datos personales.
+                        </label>
                     </div>
                 </div>
                 
-                <!-- Campo oculto para capturar el código de referido -->
                 <input type="hidden" name="ref" th:value="${param.ref}">
                 <button type="submit" class="btn btn-gold w-100 py-3 rounded-pill shadow">Registrarse y Jugar</button>
             </form>
@@ -154,5 +196,50 @@
 
         </div>
     </div>
+    <!-- Script completo para validación de campos requeridos y legales con SweetAlert2 -->
+    <script>
+        document.querySelector('form').addEventListener('submit', function (event) {
+            const nombre = document.getElementById('nombre').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const terminos = document.getElementById('aceptaTerminos').checked;
+            const privacidad = document.getElementById('aceptaPrivacidad').checked;
+
+            let mensaje = '';
+
+            if (!nombre) {
+                mensaje = 'El nombre completo es obligatorio.';
+            } else if (!email) {
+                mensaje = 'El correo electrónico es obligatorio.';
+            } else if (!email.includes('@') || !email.includes('.')) {
+                mensaje = 'El correo electrónico no es válido.';
+            } else if (!telefono) {
+                mensaje = 'El teléfono es obligatorio.';
+            } else if (telefono.length !== 10 || !/^\d{10}$/.test(telefono)) {
+                mensaje = 'El teléfono debe contener exactamente 10 dígitos numéricos.';
+            } else if (!password) {
+                mensaje = 'La contraseña es obligatoria.';
+            } else if (!terminos) {
+                mensaje = 'Debes aceptar los Términos y Condiciones para continuar.';
+            } else if (!privacidad) {
+                mensaje = 'Debes aceptar el Aviso de Privacidad para continuar.';
+            }
+
+            if (mensaje) {
+                event.preventDefault(); // Detiene el envío del formulario
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atención requerida',
+                    text: mensaje,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#f59e0b',
+                    background: '#111827',
+                    color: '#f8fafc'
+                });
+            }
+        });
+    </script>
 </body>
 </html>

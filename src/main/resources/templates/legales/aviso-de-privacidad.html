@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Aviso de Privacidad - FortunaRifas</title>
+    <link th:href="@{/css/bootstrap.min.css}" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #f8fafc;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+        }
+        .legal-card {
+            background: rgba(203, 213, 225, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            color: #0f172a;
+        }
+        .legal-content {
+            line-height: 1.7;
+            text-align: justify;
+        }
+        .legal-content h4, .legal-content h5 {
+            color: #1e293b;
+            font-weight: 700;
+            margin-top: 1.5rem;
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #000;
+            font-weight: 700;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        .btn-gold:hover {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+            color: #000;
+        }
+    </style>
+</head>
+<body class="py-5">
+    <div class="container" style="max-width: 800px;">
+        <div class="legal-card p-4 p-md-5">
+            <div class="text-center mb-5">
+                <i class="fa-solid fa-shield-halved fa-3x text-warning mb-3"></i>
+                <h2 class="fw-bold">Aviso de Privacidad</h2>
+                <p class="text-muted">Última actualización: Septiembre de 2026</p>
+            </div>
+
+            <div class="legal-content">
+                <p>En cumplimiento a la <strong>Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP)</strong>, FortunaRifas pone a su disposición el presente Aviso de Privacidad.</p>
+
+                <h4>1. Datos Personales Recabados</h4>
+                <p>Para la creación de cuentas y participación en los sorteos, recabamos los siguientes datos personales de forma directa en nuestro formulario de registro:</p>
+                <ul>
+                    <li>Nombre completo.</li>
+                    <li>Correo electrónico.</li>
+                    <li>Número de teléfono y/o WhatsApp.</li>
+                    <li>Contraseña (almacenada de forma encriptada).</li>
+                </ul>
+                <p>No recabamos datos financieros de manera directa; los pagos se realizan mediante transferencia externa y solo requerimos el comprobante para la validación administrativa.</p>
+
+                <h4>2. Finalidad del Tratamiento de Datos</h4>
+                <p>Los datos recabados serán utilizados exclusiva y estrictamente para las siguientes finalidades principales:</p>
+                <ul>
+                    <li>Identificación y creación del perfil de usuario.</li>
+                    <li>Gestión de compra, apartado y asignación de boletos digitales.</li>
+                    <li>Contacto directo vía email o teléfono para la notificación de ganadores.</li>
+                    <li>Administración del sistema de referidos y comisiones.</li>
+                </ul>
+
+                <h4>3. Transferencia de Datos</h4>
+                <p>FortunaRifas <strong>no transfiere, vende ni comparte</strong> su información personal con terceros no relacionados con la operación directa de la plataforma, salvo requerimiento por mandato judicial o de autoridades competentes en la materia.</p>
+
+                <h4>4. Ejercicio de los Derechos ARCO</h4>
+                <p>Usted tiene en todo momento el derecho de <strong>Acceder, Rectificar, Cancelar u Oponerse (Derechos ARCO)</strong> al tratamiento de sus datos personales. Para ejercer estos derechos o solicitar la eliminación total de su cuenta y registros, deberá enviar una solicitud al correo electrónico de soporte técnico de la plataforma.</p>
+                <p>La eliminación de la cuenta conlleva la pérdida irrevocable de boletos apartados, pagados o comisiones pendientes.</p>
+
+                <h4>5. Modificaciones al Aviso</h4>
+                <p>Nos reservamos el derecho de efectuar en cualquier momento modificaciones o actualizaciones al presente aviso. Estas modificaciones estarán disponibles al público a través de esta misma sección de nuestra página web.</p>
+            </div>
+
+            <div class="text-center mt-5 pt-4 border-top border-secondary">
+                <button onclick="window.close()" class="btn btn-gold px-5 py-2 rounded-pill shadow">
+                    <i class="fa-solid fa-check me-2"></i> Entendido, cerrar pestaña
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

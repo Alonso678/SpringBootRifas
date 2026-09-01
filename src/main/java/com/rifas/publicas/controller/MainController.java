@@ -81,14 +81,24 @@ public class MainController {
 
     @PostMapping("/registro")
     public String registrarUsuario(@Valid @ModelAttribute("usuario") Usuario usuario,
+            @RequestParam(value = "aceptaTerminos", required = false) String aceptaTerminos,
+            @RequestParam(value = "aceptaPrivacidad", required = false) String aceptaPrivacidad,
             BindingResult bindingResult,
             @RequestParam(value = "ref", required = false) String codigoRef,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes, Model model) {
 
+        // Validación estricta del lado del servidor
+        if (aceptaTerminos == null || aceptaPrivacidad == null) {
+            model.addAttribute("error", "Es obligatorio aceptar los Términos y Condiciones y el Aviso de Privacidad.");
+            model.addAttribute("usuario", usuario); // Para no borrar lo que ya había escrito
+            return "registro"; // Regresa a la vista de registro
+        }
+
+        // Validación de errores de binding (por ejemplo, campos vacíos, formato incorrecto)
         if (bindingResult.hasErrors())
             return "registro";
 
-        // 1. Validar si el correo ya está registrado
+        // Validar si el correo ya está registrado
         if (usuarioRepository.findByEmail(usuario.getEmail()).isPresent()) {
             redirectAttributes.addFlashAttribute("mensajeError", "El correo electrónico ya está registrado.");
             return "redirect:/registro";
@@ -111,6 +121,16 @@ public class MainController {
             return "redirect:/registro";
         }
         return "redirect:/login";
+    }
+
+    @GetMapping("/terminos-y-condiciones")
+    public String mostrarTerminos() {
+        return "legales/terminos-y-condiciones";
+    }
+
+    @GetMapping("/aviso-de-privacidad")
+    public String mostrarPrivacidad() {
+        return "legales/aviso-de-privacidad";
     }
 
     // Muestra la vista con el formulario para ingresar el correo

@@ -132,20 +132,19 @@
             <div th:if="${mensajeExito}" class="alert alert-success py-2 small text-center border-0 shadow-sm"
                 th:text="${mensajeExito}"></div>
 
-            <form th:action="@{/login}" method="post">
+            <form th:action="@{/login}" method="post" novalidate>
                 <div class="mb-3">
                     <label class="form-label fw-semibold small text-muted">Correo Electrónico</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
-                        <input type="email" name="username" class="form-control" placeholder="tucorreo@email.com"
-                            required>
+                        <input type="email" id="username" name="username" class="form-control" placeholder="tucorreo@email.com">
                     </div>
                 </div>
                 <div class="mb-4">
                     <label class="form-label fw-semibold small text-muted">Contraseña</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
-                        <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-gold w-100 py-3 rounded-pill shadow">Ingresar al Sistema</button>
@@ -168,6 +167,38 @@
             </div>
         </div>
     </div>
+    <!-- Script de SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.querySelector('form').addEventListener('submit', function (event) {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            let mensaje = '';
+
+            if (!username) {
+                mensaje = 'Por favor, ingresa tu correo electrónico.';
+            } else if (!username.includes('@') || !username.includes('.')) {
+                mensaje = 'El correo electrónico no es válido.';
+            }else if (!password) {
+                mensaje = 'Por favor, ingresa tu contraseña.';
+            }
+
+            if (mensaje) {
+                event.preventDefault(); // Detiene el envío del formulario
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atención requerida',
+                    text: mensaje,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#f59e0b',
+                    background: '#111827',
+                    color: '#f8fafc'
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

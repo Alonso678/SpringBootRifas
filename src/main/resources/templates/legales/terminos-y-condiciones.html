@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Términos y Condiciones - FortunaRifas</title>
+    <link th:href="@{/css/bootstrap.min.css}" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #f8fafc;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+        }
+        .legal-card {
+            background: rgba(203, 213, 225, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            color: #0f172a;
+        }
+        .legal-content {
+            line-height: 1.7;
+            text-align: justify;
+        }
+        .legal-content h4, .legal-content h5 {
+            color: #1e293b;
+            font-weight: 700;
+            margin-top: 1.5rem;
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #000;
+            font-weight: 700;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        .btn-gold:hover {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+            color: #000;
+        }
+    </style>
+</head>
+<body class="py-5">
+    <div class="container" style="max-width: 800px;">
+        <div class="legal-card p-4 p-md-5">
+            <div class="text-center mb-5">
+                <i class="fa-solid fa-scale-balanced fa-3x text-warning mb-3"></i>
+                <h2 class="fw-bold">Términos y Condiciones</h2>
+                <p class="text-muted">Última actualización: Septiembre de 2026</p>
+            </div>
+
+            <div class="legal-content">
+                <h4>1. Aceptación de los Términos</h4>
+                <p>Al acceder, registrarse y utilizar la plataforma de FortunaRifas, usted acepta estar sujeto a los presentes Términos y Condiciones. Si no está de acuerdo con alguna parte de los términos, no podrá utilizar nuestros servicios de apartado y compra de boletos.</p>
+
+                <h4>2. Requisitos de los Usuarios</h4>
+                <p>Para participar en los sorteos, el usuario debe ser mayor de 18 años y contar con capacidad legal para contratar. El registro requiere información veraz y comprobable. Nos reservamos el derecho de solicitar identificación oficial para entregar cualquier premio.</p>
+
+                <h4>3. Mecánica de Compra y Apartado</h4>
+                <ul>
+                    <li>Los boletos seleccionados cambian a estado "APARTADO" temporalmente hasta que se confirme el pago.</li>
+                    <li>Si el pago no es validado en el tiempo estipulado por cada rifa, los boletos volverán al estado "DISPONIBLE" y el sistema los liberará automáticamente.</li>
+                    <li>La compra solo se considera exitosa ("PAGADO") una vez que el administrador valida la transacción y se emite el boleto digital.</li>
+                </ul>
+
+                <h4>4. Reembolsos y Cancelaciones</h4>
+                <p>Debido a la naturaleza de los sorteos, <strong>no existen devoluciones ni cancelaciones</strong> una vez que un boleto ha cambiado a estado "PAGADO", salvo que la rifa sea cancelada en su totalidad por la administración. En dicho caso, se reembolsará el 100% del importe pagado.</p>
+
+                <h4>5. Reclamación de Premios</h4>
+                <p>Los ganadores serán notificados a través del correo electrónico o teléfono proporcionado en su registro. Cuentan con un plazo máximo de 30 días naturales a partir de la fecha del sorteo para reclamar su premio. Los gastos de envío o traslado del premio correrán por cuenta del ganador, a menos que se especifique lo contrario en la descripción de la rifa.</p>
+                
+                <h4>6. Sistema de Embajadores</h4>
+                <p>Los usuarios registrados pueden obtener comisiones y boletos gratis mediante el sistema de referidos. FortunaRifas se reserva el derecho de auditar y bloquear cuentas que presenten comportamiento fraudulento para obtener dichos beneficios (ej. auto-referencias o cuentas falsas).</p>
+            </div>
+
+            <div class="text-center mt-5 pt-4 border-top border-secondary">
+                <button onclick="window.close()" class="btn btn-gold px-5 py-2 rounded-pill shadow">
+                    <i class="fa-solid fa-check me-2"></i> Entendido, cerrar pestaña
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
