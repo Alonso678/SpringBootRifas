@@ -13,16 +13,23 @@
 <body class="bg-black text-white">
 
     <div class="container py-5">
+        
+        <!-- Banner de Error si no cumple el porcentaje mínimo -->
+        <div th:if="${param.errorPorcentaje != null}" class="alert alert-danger alert-dismissible fade show text-center fw-bold shadow-sm mb-4" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> El sorteo no cumple con el porcentaje minimo
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
         <!-- Encabezado y Selector de Rifa -->
         <div class="row mb-4 align-items-center">
-            <div class="col-md-6">
+            <div class="col-md-5">
                 <h2 class="fw-bold text-warning"><i class="fa-solid fa-chart-line me-2"></i> Dashboard de Análisis</h2>
                 <p class="text-muted small">Panorama financiero y métricas de rendimiento por sorteo.</p>
             </div>
-            <div class="col-md-6 text-md-end">
-                <form method="get" th:action="@{/admin/analisis}" class="d-inline-flex align-items-center gap-2">
+            <div class="col-md-7 text-md-end">
+                <form method="get" th:action="@{/admin/analisis}" class="d-inline-flex align-items-center gap-2 flex-wrap justify-content-md-end">
                     <label for="rifaId" class="small text-muted text-nowrap">Seleccionar Rifa:</label>
-                    <select id="rifaId" name="rifaId" class="form-select bg-dark text-white border-secondary form-select-sm" onchange="this.form.submit()">
+                    <select id="rifaIdSelect" name="rifaId" class="form-select bg-dark text-white border-secondary form-select-sm w-auto" onchange="this.form.submit()">
                         <option th:each="r : ${rifas}" 
                                 th:value="${r.id}" 
                                 th:text="${r.titulo}" 
@@ -30,45 +37,87 @@
                         </option>
                     </select>
                 </form>
+
+                <!-- Botón Iniciar Sorteo con validación previa -->
+                <a th:if="${rifaSeleccionadaId != null}" th:href="@{/admin/sorteos/iniciar-validacion/{id}(id=${rifaSeleccionadaId})}"
+                    class="btn btn-success btn-sm ms-2">
+                    <i class="fa-solid fa-play me-1"></i> Iniciar sorteo
+                </a>
+
+                <!-- Alerta de Sorteo Vencido (Solo banner) -->
+                <div th:if="${metricas.estadoRifa == 'VENCIDA'}"
+                    class="alert alert-warning shadow-lg mb-4 d-flex align-items-center mt-3">
+                    <div>
+                        <i class="fa-solid fa-triangle-exclamation fs-4 me-2"></i>
+                        <span>El sorteo ha vencido y su estatus cambió a <strong>VENCIDA</strong>. Es necesario actualizar la fecha.</span>
+                    </div>
+                </div>
+
                 <a th:href="@{/admin/rifas}" class="btn btn-outline-light btn-sm ms-2">
                     <i class="fa-solid fa-arrow-left me-1"></i> Volver
                 </a>
             </div>
         </div>
 
+        <!-- Botón Flotante para Actualizar Fecha en la Esquina Inferior Derecha -->
+        <button th:if="${metricas.estadoRifa == 'VENCIDA' and rifaSeleccionadaId != null}" 
+            class="position-fixed bottom-0 end-0 m-4 btn btn-warning btn-lg fw-bold shadow-lg rounded-pill px-4 py-3 border border-dark"
+            style="z-index: 1050;"
+            data-bs-toggle="modal"
+            data-bs-target="#modalCrearRifa"
+            th:with="rCur=${rifas.?[id == __${rifaSeleccionadaId}__][0]}"
+            th:onclick="prepararEdicion([[${rCur.id}]], [[${rCur.titulo}]], [[${rCur.descripcion}]], [[${rCur.precioBoleto}]], [[${rCur.totalBoletos}]], [[${#temporals.format(rCur.fechaSorteo, 'yyyy-MM-dd') + 'T' + #temporals.format(rCur.fechaSorteo, 'HH:mm')}]], [[${rCur.videoUrl}]], [[${rCur.costoPremio}]], 'ACTIVA')">
+            <i class="fa-solid fa-calendar-days me-2"></i> Actualizar Fecha Sorteo
+        </button>
+
         <!-- Si hay métricas disponibles -->
         <div th:if="${metricas != null}">
             <!-- Tarjetas KPI -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-3">
-                    <div class="card bg-dark border-secondary text-white h-100 shadow-sm">
-                        <div class="card-body">
-                            <h6 class="text-muted small text-uppercase">Ingresos Totales</h6>
-                            <h3 class="fw-bold text-success mt-2" th:text="${'$' + #numbers.formatDecimal(metricas.ingresosTotales, 1, 'DEFAULT', 2, 'DEFAULT')}">$0.00</h3>
+            <div class="row g-3 mb-4">
+                <div class="col-md">
+                    <div class="card bg-dark border-secondary h-100 shadow-sm">
+                        <div class="card-body text-white">
+                            <h6 class="text-light small text-uppercase">Ingresos Totales</h6>
+                            <h3 class="fw-bold text-success mt-2"
+                                th:text="${'$' + #numbers.formatDecimal(metricas.ingresosTotales, 1, 'DEFAULT', 2, 'DEFAULT')}">
+                                $0.00</h3>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md">
                     <div class="card bg-dark border-secondary text-white h-100 shadow-sm">
                         <div class="card-body">
-                            <h6 class="text-muted small text-uppercase">Utilidad Neta</h6>
-                            <h3 class="fw-bold text-info mt-2" th:text="${'$' + #numbers.formatDecimal(metricas.utilidadNeta, 1, 'DEFAULT', 2, 'DEFAULT')}">$0.00</h3>
+                            <h6 class="text-light small text-uppercase">Utilidad Neta</h6>
+                            <h3 class="fw-bold text-info mt-2"
+                                th:text="${'$' + #numbers.formatDecimal(metricas.utilidadNeta, 1, 'DEFAULT', 2, 'DEFAULT')}">$0.00
+                            </h3>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md">
                     <div class="card bg-dark border-secondary text-white h-100 shadow-sm">
                         <div class="card-body">
-                            <h6 class="text-muted small text-uppercase">Boletos Vendidos</h6>
-                            <h3 class="fw-bold text-warning mt-2" th:text="${metricas.boletosVendidos + ' / ' + metricas.totalBoletos}">0 / 0</h3>
+                            <h6 class="text-light small text-uppercase">Pagados</h6>
+                            <h3 class="fw-bold text-warning mt-2"
+                                th:text="${metricas.boletosVendidos + ' / ' + metricas.totalBoletos}">0 / 0</h3>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md">
                     <div class="card bg-dark border-secondary text-white h-100 shadow-sm">
                         <div class="card-body">
-                            <h6 class="text-muted small text-uppercase">Costo del Premio</h6>
-                            <h3 class="fw-bold text-danger mt-2" th:text="${'$' + #numbers.formatDecimal(metricas.costoPremio, 1, 'DEFAULT', 2, 'DEFAULT')}">$0.00</h3>
+                            <h6 class="text-light small text-uppercase">Pendientes</h6>
+                            <h3 class="fw-bold text-secondary mt-2" th:text="${metricas.boletosPendientes}">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="card bg-dark border-secondary text-white h-100 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-light small text-uppercase">Costo Premio</h6>
+                            <h3 class="fw-bold text-danger mt-2"
+                                th:text="${'$' + #numbers.formatDecimal(metricas.costoPremio, 1, 'DEFAULT', 2, 'DEFAULT')}">$0.00
+                            </h3>
                         </div>
                     </div>
                 </div>
@@ -94,8 +143,12 @@
                                     <strong th:text="${'$' + #numbers.formatDecimal(metricas.precioPorBoleto, 1, 'DEFAULT', 2, 'DEFAULT')}">$0.00</strong>
                                 </li>
                                 <li class="list-group-item bg-dark text-white border-secondary d-flex justify-content-between">
-                                    <span>Porcentaje Vendido:</span>
+                                    <span>Porcentaje Pagado:</span>
                                     <strong class="text-warning" th:text="${metricas.porcentajeVendido + '%'}">0%</strong>
+                                </li>
+                                <li class="list-group-item bg-dark text-white border-secondary d-flex justify-content-between">
+                                    <span>Boletos Pendientes:</span>
+                                    <strong class="text-secondary" th:text="${metricas.boletosPendientes}">0</strong>
                                 </li>
                                 <li class="list-group-item bg-dark text-white border-secondary d-flex justify-content-between">
                                     <span>Inversión (Premio):</span>
@@ -103,11 +156,11 @@
                                 </li>
                                 <li class="list-group-item bg-dark text-white border-secondary d-flex justify-content-between">
                                     <span>Ganancia Neta Estimada:</span>
-                                    <strong class="text-success" th:text="${'$' + #numbers.formatDecimal(metricas.utilidadNeta, 1, 'DEFAULT', 2, 'DEFAULT')}">$0.00</strong>
+                                    <strong class="text-light" th:text="${'$' + #numbers.formatDecimal(metricas.utilidadNeta, 1, 'DEFAULT', 2, 'DEFAULT')}">$0.00</strong>
                                 </li>
                             </ul>
                         </div>
-                        <div class="alert alert-secondary bg-black border-secondary text-muted small mt-3 mb-0">
+                        <div class="alert alert-secondary bg-black border-secondary text-light small mt-3 mb-0">
                             <i class="fa-solid fa-circle-info me-1"></i> La utilidad neta se calcula restando el costo del premio de las ventas totales registradas con estado "PAGADO".
                         </div>
                     </div>
@@ -121,21 +174,112 @@
         </div>
     </div>
 
-    <!-- Script de Chart.js -->
+    <!-- MODAL ÚNICO PARA CREAR Y EDITAR RIFA -->
+    <div class="modal fade" id="modalCrearRifa" tabindex="-1" aria-labelledby="modalCrearRifaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-dark border-secondary text-white shadow-lg">
+                <div class="modal-header border-secondary">
+                    <h4 class="modal-title text-white fw-bold" id="modalCrearRifaLabel">Crear Nueva Rifa</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+                </div>
+    
+                <form id="formRifaModal" th:action="@{/admin/rifas/guardar}" th:object="${nuevaRifa}" method="post"
+                    enctype="multipart/form-data">
+                    <input type="hidden" id="rifaId" th:field="*{id}">
+                    <input type="hidden" id="rifaEstado" th:field="*{estado}">
+    
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label text-light">Título</label>
+                            <input type="text" id="rifaTitulo" th:field="*{titulo}"
+                                class="form-control bg-black text-light border-secondary" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="costoPremio" class="form-label text-white">Costo Real del Premio ($)</label>
+                            <input type="number" step="0.01" class="form-control bg-dark text-white border-secondary" id="costoPremio"
+                                th:field="*{costoPremio}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">Descripción</label>
+                            <textarea id="rifaDescripcion" th:field="*{descripcion}"
+                                class="form-control bg-black text-light border-secondary" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">Precio por Boleto ($)</label>
+                            <input type="number" step="0.01" id="rifaPrecio" th:field="*{precioBoleto}"
+                                class="form-control bg-black text-light border-secondary" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">Total de Boletos (ej. 100)</label>
+                            <input type="number" id="rifaTotalBoletos" th:field="*{totalBoletos}"
+                                class="form-control bg-black text-light border-secondary" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">Fecha del Sorteo</label>
+                            <input type="datetime-local" id="rifaFechaSorteo" th:field="*{fechaSorteo}"
+                                class="form-control bg-black text-light border-secondary" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">Enlace del Video del Sorteo (Opcional)</label>
+                            <input type="url" id="rifaVideoUrl" th:field="*{videoUrl}"
+                                class="form-control bg-black text-light border-secondary"
+                                placeholder="https://www.youtube.com/watch?v=...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="imagenFile" class="form-label text-warning">Imagen de la Rifa (.png)</label>
+                            <input type="file" class="form-control bg-dark text-light border-secondary" id="imagenFile"
+                                name="imagenFile" accept="image/png">
+                            <div class="form-text text-muted small">Selecciona una imagen en formato PNG para la rifa.</div>
+                        </div>
+                    </div>
+    
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSubmitModal">Crear Rifa y Generar Boletos</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de la página -->
     <script th:inline="javascript">
         /*<![CDATA[*/
-        var vendidos = /*[[${metricas != null ? metricas.boletosVendidos : 0}]]*/ 0;
+        // Función para rellenar los datos al entrar en modo edición/actualización
+        function prepararEdicion(id, titulo, descripcion, precio, totalBoletos, fechaSorteo, videoUrl, costoPremio, estado) {
+            document.getElementById('modalCrearRifaLabel').innerText = 'Actualizar Fecha del Sorteo';
+            document.getElementById('rifaId').value = id;
+            document.getElementById('rifaTitulo').value = titulo;
+            document.getElementById('rifaDescripcion').value = descripcion;
+            document.getElementById('rifaPrecio').value = precio;
+            document.getElementById('rifaTotalBoletos').value = totalBoletos;
+            
+            if (fechaSorteo) {
+                document.getElementById('rifaFechaSorteo').value = fechaSorteo.replace(' ', 'T');
+            }
+            
+            document.getElementById('rifaVideoUrl').value = videoUrl || '';
+            document.getElementById('costoPremio').value = costoPremio;
+            document.getElementById('rifaEstado').value = estado;
+            document.getElementById('btnSubmitModal').innerText = 'Guardar Cambios';
+        }
+
+        // Script de Chart.js
+        var pagados = /*[[${metricas != null ? metricas.boletosVendidos : 0}]]*/ 0;
+        var pendientes = /*[[${metricas != null ? metricas.boletosPendientes : 0}]]*/ 0;
         var total = /*[[${metricas != null ? metricas.totalBoletos : 0}]]*/ 0;
-        var disponibles = total - vendidos;
+        var disponibles = total - (pagados + pendientes);
+        if (disponibles < 0) disponibles = 0;
 
         const ctx = document.getElementById('graficaBoletos').getContext('2d');
         new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Vendidos (Pagados)', 'Disponibles'],
+                labels: ['Pagados', 'Pendientes', 'Disponibles'],
                 datasets: [{
-                    data: [vendidos, disponibles],
-                    backgroundColor: ['#198754', '#6c757d'],
+                    data: [pagados, pendientes, disponibles],
+                    backgroundColor: ['#198754', '#ffc107', '#6c757d'],
                     borderWidth: 0
                 }]
             },
@@ -152,5 +296,7 @@
         });
         /*]]>*/
     </script>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

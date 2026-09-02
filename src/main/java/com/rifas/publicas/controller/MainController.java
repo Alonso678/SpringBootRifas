@@ -190,6 +190,14 @@ public class MainController {
         return "redirect:/login?resetSuccess=true";
     }
 
+    // Vista para mostrar el historial de rifas finalizadas o vencidas
+    @GetMapping("/rifas/historial")
+    public String verHistorialRifas(Model model) {
+        List<Rifa> rifasHistorial = rifaRepository.findByEstadoIn(List.of("VENCIDA", "FINALIZADA"));
+        model.addAttribute("rifas", rifasHistorial);
+        return "rifas-historial";
+    }
+
     @GetMapping("/rifas/{id}")
     public String detalleRifa(@PathVariable("id") Long id, Model model) {
         Rifa rifa = rifaRepository.findById(id).orElseThrow(() -> new RuntimeException("Rifa no encontrada"));

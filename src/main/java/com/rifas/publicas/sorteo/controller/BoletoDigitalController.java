@@ -1,13 +1,19 @@
 package com.rifas.publicas.sorteo.controller;
 
 import com.rifas.publicas.model.Boleto;
+import com.rifas.publicas.model.Rifa;
 import com.rifas.publicas.repository.BoletoRepository;
+import com.rifas.publicas.repository.RifaRepository;
 import com.rifas.publicas.sorteo.model.BoletoDigital;
 import com.rifas.publicas.sorteo.model.ConfigSorteo;
 import com.rifas.publicas.sorteo.repository.BoletoDigitalRepository;
 import com.rifas.publicas.sorteo.repository.ConfigSorteoRepository;
 import com.rifas.publicas.sorteo.service.BoletoDigitalService;
 import com.rifas.publicas.sorteo.service.CryptoService;
+import com.rifas.publicas.sorteo.service.SorteoService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,6 +31,10 @@ import java.security.Principal;
 @Controller
 public class BoletoDigitalController {
 
+    private static final Logger log = LoggerFactory.getLogger(BoletoDigitalController.class);
+    
+
+    
     private final BoletoDigitalService boletoDigitalService;
 
     private final BoletoRepository boletoRepository;
@@ -33,11 +43,17 @@ public class BoletoDigitalController {
 
     private final ConfigSorteoRepository configSorteoRepository;
 
-    BoletoDigitalController(BoletoDigitalService boletoDigitalService, BoletoRepository boletoRepository, BoletoDigitalRepository boletoDigitalRepository, ConfigSorteoRepository configSorteoRepository) {
+    private final RifaRepository rifaRepository;
+
+    private final SorteoService sorteoService;
+
+    BoletoDigitalController(BoletoDigitalService boletoDigitalService, BoletoRepository boletoRepository, BoletoDigitalRepository boletoDigitalRepository, ConfigSorteoRepository configSorteoRepository, RifaRepository rifaRepository, SorteoService sorteoService) {
         this.boletoDigitalService = boletoDigitalService;
         this.boletoRepository = boletoRepository;
         this.boletoDigitalRepository = boletoDigitalRepository;
         this.configSorteoRepository = configSorteoRepository;
+        this.rifaRepository = rifaRepository;
+        this.sorteoService = sorteoService; 
     }
 
     /**
@@ -161,22 +177,55 @@ public class BoletoDigitalController {
         return "sorteo/resultado-verificacion";
     }
 
+    /**
+     * Dashboard de administración ajustado: Reemplazados los valores quemados (ej. totalBoletos = 10) 
+     * por consultas reales a la base de datos y validación dinámica de metas.
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/sorteo/dashboard/{rifaId}")
     public String verDashboardSorteo(@PathVariable Long rifaId, Model model) {
+        log.info("Cargando dashboard de sorteo para la rifa ID: {}", rifaId);
+
+        Rifa rifa = rifaRepository.findById(rifaId)
+                .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
+        
         ConfigSorteo config = configSorteoRepository.findByRifaId(rifaId).orElse(null);
         
-        // Simulación de métricas para la vista
-        long totalBoletos = 10; // Para tu prueba de 10 boletos
+        // Datos reales obtenidos dinámicamente de la entidad y el repositorio[cite: 6]
+        int totalBoletos = rifa.getTotalBoletos();
         long boletosVendidos = boletoRepository.countByRifaIdAndPagado(rifaId);
-        boolean cumpleMeta = (double) boletosVendidos / totalBoletos >= 0.70;
+        long boletosPendientes = boletoRepository.countByRifaIdAndPendiente(rifaId);
+        
+        // Uso del servicio centralizado en lugar de lógica hardcodeada >= 0.70[cite: 6]
+        boolean cumpleMeta = sorteoService.cumpleUmbralMinimo(rifaId);
 
         model.addAttribute("rifaId", rifaId);
+        model.addAttribute("rifa", rifa);
         model.addAttribute("totalBoletos", totalBoletos);
         model.addAttribute("boletosVendidos", boletosVendidos);
+        model.addAttribute("boletosPendientes", boletosPendientes);
         model.addAttribute("cumpleMeta", cumpleMeta);
         model.addAttribute("configSorteo", config);
 
         return "sorteo/admin-dashboard";
     }
+
+    // @PreAuthorize("hasRole('ADMIN')")
+    // @GetMapping("/admin/sorteo/dashboard/{rifaId}")
+    // public String verDashboardSorteo(@PathVariable Long rifaId, Model model) {
+    //     ConfigSorteo config = configSorteoRepository.findByRifaId(rifaId).orElse(null);
+        
+    //     // Simulación de métricas para la vista
+    //     long totalBoletos = 10; // Para tu prueba de 10 boletos
+    //     long boletosVendidos = boletoRepository.countByRifaIdAndPagado(rifaId ,"PAGADO");
+    //     boolean cumpleMeta = (double) boletosVendidos / totalBoletos >= 0.70;
+
+    //     model.addAttribute("rifaId", rifaId);
+    //     model.addAttribute("totalBoletos", totalBoletos);
+    //     model.addAttribute("boletosVendidos", boletosVendidos);
+    //     model.addAttribute("cumpleMeta", cumpleMeta);
+    //     model.addAttribute("configSorteo", config);
+
+    //     return "sorteo/admin-dashboard";
+    // }
 }

@@ -23,7 +23,7 @@ public class Rifa {
     @Column(nullable = false, length = 150)
     private String titulo;
 
-    @Column(name = "imagen_url") // O el nombre de la columna en tu BD si aplica
+    @Column(name = "imagen_url")
     private String imagenUrl;
 
     @Column(columnDefinition = "TEXT")
@@ -36,10 +36,10 @@ public class Rifa {
     private Integer totalBoletos;
 
     @NotNull(message = "La fecha del sorteo es obligatoria")
-    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") // <-- Esto le indica a Spring cómo leer la fecha que manda el input
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+    @Column(name = "fecha_sorteo", nullable = false)
     private LocalDateTime fechaSorteo;
 
-    // Nuevo campo para almacenar el enlace del video del sorteo (YouTube, Vimeo, etc.)
     @Column(length = 500)
     private String videoUrl;
 
@@ -48,6 +48,10 @@ public class Rifa {
 
     @Column(name = "costo_premio")
     private BigDecimal costoPremio;
+
+    // --- Único atributo nuevo requerido ---
+    @Column(name = "porcentaje_minimo_ventas", nullable = false, precision = 5, scale = 2)
+    private BigDecimal porcentajeMinimoVentas = new BigDecimal("70.00");
 
     // --- Getters y Setters ---
 
@@ -115,7 +119,6 @@ public class Rifa {
         this.estado = estado;
     }
 
-    // Getters y Setters
     public String getImagenUrl() {
         return imagenUrl;
     }
@@ -130,5 +133,13 @@ public class Rifa {
 
     public void setCostoPremio(BigDecimal costoPremio) {
         this.costoPremio = costoPremio;
+    }
+
+    public BigDecimal getPorcentajeMinimoVentas() {
+        return porcentajeMinimoVentas;
+    }
+
+    public void setPorcentajeMinimoVentas(BigDecimal porcentajeMinimoVentas) {
+        this.porcentajeMinimoVentas = porcentajeMinimoVentas;
     }
 }

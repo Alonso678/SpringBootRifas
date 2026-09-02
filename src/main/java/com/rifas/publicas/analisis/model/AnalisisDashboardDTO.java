@@ -7,11 +7,13 @@ public class AnalisisDashboardDTO {
     private String tituloRifa;
     private int totalBoletos;
     private int boletosVendidos;
+    private int boletosPendientes;
     private BigDecimal precioPorBoleto;
     private BigDecimal costoPremio;
     private BigDecimal ingresosTotales;
     private BigDecimal utilidadNeta;
     private double porcentajeVendido;
+    private String estadoRifa;
 
     // Genera los Getters y Setters o usa @Data si tienes Lombok
 
@@ -87,4 +89,18 @@ public class AnalisisDashboardDTO {
         this.porcentajeVendido = porcentajeVendido;
     }
 
+    public int getBoletosPendientes() {
+        return boletosPendientes;
+    }
+    public void setBoletosPendientes(int boletosPendientes) {
+        this.boletosPendientes = boletosPendientes;
+    }
+
+    public String getEstadoRifa() {
+        return estadoRifa;
+    }
+    
+    public void setEstadoRifa(String estadoRifa) {
+        this.estadoRifa = estadoRifa;
+    }
 }

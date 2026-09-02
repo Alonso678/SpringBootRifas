@@ -26,6 +26,11 @@ public class AdminAnalisisController {
         List<Rifa> listaRifas = analisisService.obtenerTodasLasRifas();
         model.addAttribute("rifas", listaRifas);
 
+        // Agrega esta línea para que el modal de la rifa disponga del objeto requerido
+        if (!model.containsAttribute("nuevaRifa")) {
+            model.addAttribute("nuevaRifa", new Rifa());
+        }
+        
         if (!listaRifas.isEmpty()) {
             // Si no viene un ID por parámetro, se selecciona la primera por defecto
             Long idSeleccionado = (rifaId != null) ? rifaId : listaRifas.get(0).getId();

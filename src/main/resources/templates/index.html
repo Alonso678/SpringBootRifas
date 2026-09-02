@@ -278,6 +278,12 @@
                             <i class="fa-solid fa-ticket me-1 text-warning"></i> Mis Boletos
                         </a>
                     </li>
+
+                    <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()')}">
+                        <a href="/rifas/historial" class="nav-link">
+                            <i class="fas fa-history"></i> Rifas Finalizadas y Vencidas
+                        </a>
+                    </li>
     
                     <li class="nav-item" th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
                         <a class="nav-link text-warning fw-semibold px-2" href="/admin/rifas">
