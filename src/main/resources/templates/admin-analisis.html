@@ -193,27 +193,27 @@
                         <div class="mb-3">
                             <label class="form-label text-light">Título</label>
                             <input type="text" id="rifaTitulo" th:field="*{titulo}"
-                                class="form-control bg-black text-light border-secondary" required>
+                                class="form-control bg-black text-light border-secondary" readonly required>
                         </div>
                         <div class="mb-3">
                             <label for="costoPremio" class="form-label text-white">Costo Real del Premio ($)</label>
                             <input type="number" step="0.01" class="form-control bg-dark text-white border-secondary" id="costoPremio"
-                                th:field="*{costoPremio}" required>
+                                th:field="*{costoPremio}" readonly required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label text-light">Descripción</label>
                             <textarea id="rifaDescripcion" th:field="*{descripcion}"
-                                class="form-control bg-black text-light border-secondary" rows="3" required></textarea>
+                                class="form-control bg-black text-light border-secondary" rows="3" readonly required></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label text-light">Precio por Boleto ($)</label>
                             <input type="number" step="0.01" id="rifaPrecio" th:field="*{precioBoleto}"
-                                class="form-control bg-black text-light border-secondary" required>
+                                class="form-control bg-black text-light border-secondary" readonly required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label text-light">Total de Boletos (ej. 100)</label>
                             <input type="number" id="rifaTotalBoletos" th:field="*{totalBoletos}"
-                                class="form-control bg-black text-light border-secondary" required>
+                                class="form-control bg-black text-light border-secondary" readonly required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label text-light">Fecha del Sorteo</label>

@@ -231,7 +231,7 @@
                                                     [[${rifa.totalBoletos}]], 
                                                     [[${rifa.fechaSorteo}]], 
                                                     [[${rifa.videoUrl}]],
-                                                    [[${rifa.imagenUrl}]],
+                                                    [[${rifa.costoPremio}]],
                                                     [[${rifa.estado}]]
                                                 )" title="Editar">
                                                 <i class="fa-solid fa-pen-to-square"></i>
@@ -305,12 +305,9 @@
                             aria-label="Cerrar"></button>
                     </div>
         
-                    <!-- CORRECCIÓN 1: Se agregó enctype="multipart/form-data" para permitir la subida de archivos -->
                     <form id="formRifaModal" th:action="@{/admin/rifas/guardar}" th:object="${nuevaRifa}" method="post"
                         enctype="multipart/form-data">
-                        <!-- Campo oculto indispensable para mandar el ID al actualizar -->
                         <input type="hidden" id="rifaId" th:field="*{id}">
-                        <!-- Campo oculto para mantener el estado actual al editar / crear -->
                         <input type="hidden" id="rifaEstado" th:field="*{estado}">
         
                         <div class="modal-body p-4">
@@ -321,8 +318,8 @@
                             </div>
                             <div class="mb-3">
                                 <label for="costoPremio" class="form-label text-white">Costo Real del Premio ($)</label>
-                                <input type="number" step="0.01" class="form-control bg-dark text-white border-secondary" id="costoPremio"
-                                    th:field="*{costoPremio}" required>
+                                <input type="number" step="0.01" class="form-control bg-dark text-white border-secondary"
+                                    id="costoPremio" th:field="*{costoPremio}" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label text-light">Descripción</label>
@@ -350,7 +347,6 @@
                                     class="form-control bg-black text-light border-secondary"
                                     placeholder="https://www.youtube.com/watch?v=...">
                             </div>
-                            <!-- Selector de archivo para la imagen .png -->
                             <div class="mb-3">
                                 <label for="imagenFile" class="form-label text-warning">Imagen de la Rifa (.png)</label>
                                 <input type="file" class="form-control bg-dark text-light border-secondary" id="imagenFile"
@@ -361,8 +357,8 @@
         
                         <div class="modal-footer border-secondary">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSubmitModal">Crear Rifa y
-                                Generar Boletos</button>
+                            <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSubmitModal">Crear Rifa y Generar
+                                Boletos</button>
                         </div>
                     </form>
                 </div>
@@ -389,23 +385,26 @@
             document.getElementById('rifaTotalBoletos').value = "";
             document.getElementById('rifaFechaSorteo').value = "";
             document.getElementById('rifaVideoUrl').value = "";
+            document.getElementById('costoPremio').value = "";
             document.getElementById('rifaImagenUrl').value = "";
         }
 
-        function prepararEdicion(id, titulo, descripcion, precio, totalBoletos, fechaSorteo, videoUrl, imagenUrl, estado) {
-            document.getElementById('modalCrearRifaLabel').innerText = "Editar Rifa";
-            document.getElementById('btnSubmitModal').innerText = "Guardar Cambios";
-
-            // Rellenar campos con los valores de la rifa seleccionada
+        function prepararEdicion(id, titulo, descripcion, precio, totalBoletos, fechaSorteo, videoUrl, costoPremio, estado) {
+            document.getElementById('modalCrearRifaLabel').innerText = 'Editar rifa';
             document.getElementById('rifaId').value = id;
-            document.getElementById('rifaEstado').value = estado || "ACTIVA";
-            document.getElementById('rifaTitulo').value = titulo || "";
-            document.getElementById('rifaDescripcion').value = descripcion || "";
-            document.getElementById('rifaPrecio').value = precio || "";
-            document.getElementById('rifaTotalBoletos').value = totalBoletos || "";
-            document.getElementById('rifaFechaSorteo').value = fechaSorteo ? fechaSorteo.substring(0, 16) : "";
-            document.getElementById('rifaVideoUrl').value = videoUrl || "";
-            document.getElementById('rifaImagenUrl').value = imagenUrl || "";
+            document.getElementById('rifaTitulo').value = titulo;
+            document.getElementById('rifaDescripcion').value = descripcion;
+            document.getElementById('rifaPrecio').value = precio;
+            document.getElementById('rifaTotalBoletos').value = totalBoletos;
+            
+            if (fechaSorteo) {
+                document.getElementById('rifaFechaSorteo').value = fechaSorteo.replace(' ', 'T');
+            }
+            
+            document.getElementById('rifaVideoUrl').value = videoUrl || '';
+            document.getElementById('costoPremio').value = costoPremio;
+            document.getElementById('rifaEstado').value = estado;
+            document.getElementById('btnSubmitModal').innerText = 'Guardar Cambios';
         }
 
         function prepararEliminacion(id, titulo) {

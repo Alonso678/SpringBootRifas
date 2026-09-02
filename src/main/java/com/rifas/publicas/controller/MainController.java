@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -29,6 +32,8 @@ import java.util.Base64;
 
 @Controller
 public class MainController {
+
+    private static final Logger log = LoggerFactory.getLogger(MainController.class);
 
     private final RifaRepository rifaRepository;
     private final BoletoRepository boletoRepository;
@@ -45,7 +50,8 @@ public class MainController {
 
     public MainController(RifaRepository rifaRepository, BoletoRepository boletoRepository,
             CompraRepository compraRepository, UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder, EmailService emailService, Compraboletosrepository compraBoletosRepository, BoletoDigitalRepository boletoDigitalRepository) {
+            PasswordEncoder passwordEncoder, EmailService emailService, Compraboletosrepository compraBoletosRepository,
+            BoletoDigitalRepository boletoDigitalRepository) {
         this.rifaRepository = rifaRepository;
         this.boletoRepository = boletoRepository;
         this.compraRepository = compraRepository;
@@ -58,7 +64,8 @@ public class MainController {
 
     @GetMapping("/")
     public String index(Model model) {
-        // Carga las rifas que estén ACTIVA o AGOTADA, y cuya fecha de sorteo aún no haya pasado
+        // Carga las rifas que estén ACTIVA o AGOTADA, y cuya fecha de sorteo aún no
+        // haya pasado
         List<Rifa> rifasVisibles = rifaRepository.findAll().stream()
                 .filter(r -> "ACTIVA".equals(r.getEstado()) || "AGOTADA".equals(r.getEstado()))
                 .filter(r -> r.getFechaSorteo() == null || r.getFechaSorteo().isAfter(LocalDateTime.now()))
@@ -94,7 +101,8 @@ public class MainController {
             return "registro"; // Regresa a la vista de registro
         }
 
-        // Validación de errores de binding (por ejemplo, campos vacíos, formato incorrecto)
+        // Validación de errores de binding (por ejemplo, campos vacíos, formato
+        // incorrecto)
         if (bindingResult.hasErrors())
             return "registro";
 
@@ -164,7 +172,7 @@ public class MainController {
     @GetMapping("/reset-password")
     public String mostrarFormularioReset(@RequestParam("token") String token, Model model) {
         model.addAttribute("token", token);
-        return "reset-password-view"; 
+        return "reset-password-view";
     }
 
     @PostMapping("/reset-password")
@@ -180,7 +188,7 @@ public class MainController {
         if (usuario == null) {
             model.addAttribute("error", "El token de recuperación es inválido o ha expirado.");
             model.addAttribute("token", token);
-            return "reset-password-view"; 
+            return "reset-password-view";
         }
 
         usuario.setPassword(passwordEncoder.encode(nuevaPassword));
@@ -201,7 +209,7 @@ public class MainController {
     @GetMapping("/rifas/{id}")
     public String detalleRifa(@PathVariable("id") Long id, Model model) {
         Rifa rifa = rifaRepository.findById(id).orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
-        List<Boleto> boletos = boletoRepository.findByRifaIdOrderByNumeroBoletoAsc(id);
+        List<Boleto> boletos = boletoRepository.findByRifaIdConUsuarioOrdenados(id);
         model.addAttribute("rifa", rifa);
         model.addAttribute("boletos", boletos);
         return "detalle-rifa";
@@ -217,7 +225,8 @@ public class MainController {
         }
 
         if (boletoIds == null || boletoIds.isEmpty()) {
-            redirectAttributes.addFlashAttribute("mensajeError", "Por favor selecciona al menos un boleto para apartar.");
+            redirectAttributes.addFlashAttribute("mensajeError",
+                    "Por favor selecciona al menos un boleto para apartar.");
             return "redirect:/rifas/" + rifaId;
         }
 
@@ -267,7 +276,7 @@ public class MainController {
 
         boolean tienePendientes = totalPendiente.compareTo(BigDecimal.ZERO) > 0;
 
-        model.addAttribute("usuario", usuario); 
+        model.addAttribute("usuario", usuario);
         model.addAttribute("compras", compras);
         model.addAttribute("totalPendiente", totalPendiente);
         model.addAttribute("tienePendientes", tienePendientes);
@@ -289,33 +298,40 @@ public class MainController {
             @RequestParam(value = "imagenFile", required = false) MultipartFile imagenFile,
             RedirectAttributes redirectAttributes) {
 
-        // Ajuste aplicado: Convertir el archivo subido directamente a Base64 para producción (Render)
         if (imagenFile != null && !imagenFile.isEmpty()) {
             try {
                 byte[] bytes = imagenFile.getBytes();
                 String base64Image = "data:image/png;base64," + Base64.getEncoder().encodeToString(bytes);
                 rifa.setImagenUrl(base64Image);
+                log.info("Imagen de la rifa procesada y convertida a Base64 correctamente.");
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Error al procesar la imagen de la rifa: {}", e.getMessage(), e);
             }
         }
 
+        // Si la rifa es nueva (no tiene ID), la guardamos y generamos los boletos
+        // iniciales
         if (rifa.getId() == null) {
             if (rifa.getEstado() == null || rifa.getEstado().isEmpty()) {
                 rifa.setEstado("ACTIVA");
             }
             Rifa guardada = rifaRepository.save(rifa);
+            log.info("Creando nueva rifa ID: {} con {} total de boletos", guardada.getId(), guardada.getTotalBoletos());
 
-            for (int i = 1; i <= rifa.getTotalBoletos(); i++) {
-                Boleto b = new Boleto();
-                b.setNumeroBoleto(i);
-                b.setRifa(guardada);
-                b.setEstado("DISPONIBLE");
-                boletoRepository.save(b);
-            }
-        } else {
+            // Inserción masiva inicial con una sola consulta SQL
+            boletoRepository.generarBoletosEnLote(guardada.getId(), 1, guardada.getTotalBoletos());
+            log.info("Se generaron {} boletos iniciales en lote para la rifa ID: {}", guardada.getTotalBoletos(),
+                    guardada.getId());
+        }
+        // Si la rifa ya existe, actualizamos sus detalles y ajustamos los boletos según
+        // el nuevo total
+        else {
             Rifa existente = rifaRepository.findById(rifa.getId())
                     .orElseThrow(() -> new RuntimeException("Rifa no encontrada"));
+
+            int totalActualEnDb = boletoRepository.countByRifaId(rifa.getId());
+            log.info("Actualizando rifa ID: {}. Boletos actuales en BD: {}, Nuevo total solicitado: {}",
+                    rifa.getId(), totalActualEnDb, rifa.getTotalBoletos());
 
             existente.setTitulo(rifa.getTitulo());
             existente.setDescripcion(rifa.getDescripcion());
@@ -323,16 +339,43 @@ public class MainController {
             existente.setTotalBoletos(rifa.getTotalBoletos());
             existente.setFechaSorteo(rifa.getFechaSorteo());
             existente.setCostoPremio(rifa.getCostoPremio());
-            // Si se subió un nuevo archivo, la variable 'rifa' ya contendrá el Base64 generado arriba y se actualizará
+
+            // Caso 1: Ampliar número de boletos mediante una sola inserción en lote
+            // (generate_series)
+            if (rifa.getTotalBoletos() > totalActualEnDb) {
+                log.info("Ampliando boletos de {} a {} para la rifa ID: {}", totalActualEnDb, rifa.getTotalBoletos(),
+                        existente.getId());
+                boletoRepository.generarBoletosEnLote(existente.getId(), totalActualEnDb + 1, rifa.getTotalBoletos());
+                log.info("Boletos faltantes generados exitosamente en lote.");
+            }
+            // Caso 2: Reducir número de boletos mediante borrado masivo por lotes (CTE +
+            // LIMIT)
+            else if (rifa.getTotalBoletos() < totalActualEnDb) {
+                int boletosAEliminar = totalActualEnDb - rifa.getTotalBoletos();
+                log.info("Reduciendo boletos. Se requiere eliminar {} boletos disponibles para la rifa ID: {}",
+                        boletosAEliminar, existente.getId());
+
+                boletoRepository.eliminarBoletosDisponiblesEnLote(existente.getId(), boletosAEliminar);
+                log.info("Se eliminaron los boletos disponibles sobrantes en una sola operación.");
+            }
+            // Caso 3: No hay cambios en el número de boletos, solo actualizamos los
+            // detalles de la rifa
+            else {
+                log.info(
+                        "No hay cambios en el número de boletos para la rifa ID: {}. Solo se actualizarán los detalles.",
+                        existente.getId());
+            }
+            // Actualizamos la imagen y el estado solo si se proporcionan nuevos valores
             if (rifa.getImagenUrl() != null && !rifa.getImagenUrl().isEmpty()) {
                 existente.setImagenUrl(rifa.getImagenUrl());
             }
-
+            // Actualizamos el estado solo si se proporciona un nuevo valor
             if (rifa.getEstado() != null && !rifa.getEstado().isEmpty()) {
                 existente.setEstado(rifa.getEstado());
             }
-
+            // Guardamos los cambios en la rifa existente
             rifaRepository.save(existente);
+            log.info("Rifa ID: {} actualizada y persistida correctamente.", existente.getId());
         }
 
         redirectAttributes.addFlashAttribute("mensajeExito", "Rifa guardada correctamente.");
@@ -524,9 +567,9 @@ public class MainController {
         }
 
         Boleto boleto = boletoRepository.findByRifaIdAndEstadoOrderByNumeroBoletoAsc(rifaId, "DISPONIBLE")
-        .stream()
-        .findFirst()
-        .orElse(null);
+                .stream()
+                .findFirst()
+                .orElse(null);
 
         if (boleto == null) {
             ra.addFlashAttribute("mensajeError", "Lo sentimos, ya no hay boletos disponibles para esta rifa.");
@@ -539,7 +582,7 @@ public class MainController {
         compraCortesía.setEstadoPago("CANJEADO");
         compraCortesía.setMontoTotal(BigDecimal.ZERO);
         compraCortesía.setFechaCompra(LocalDateTime.now());
-        compraCortesía.setBoletos(List.of(boleto)); 
+        compraCortesía.setBoletos(List.of(boleto));
         compraCortesía = compraRepository.save(compraCortesía);
 
         boleto.setEstado("CANJEADO");
