@@ -5,7 +5,6 @@
     <title>Validación de Compras</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Hace visible el placeholder en inputs con fondo oscuro */
         .form-control.bg-dark::placeholder {
             color: #adb5bd;
             opacity: 1;
@@ -15,22 +14,35 @@
 <body class="bg-light">
     <div class="container mt-4 px-3 px-md-4">
         <a href="/admin/rifas" class="btn btn-secondary mb-3">← Volver a Admin Rifas</a>
-        <!-- Formulario de búsqueda avanzada -->
-        <form th:action="@{/admin/compras}" method="get" class="row g-3 mb-4">
-            <div class="col-12 col-md-9">
-                <div class="input-group">
-                    <span class="input-group-text bg-dark border-secondary text-warning"><i
-                            class="fa-solid fa-search"></i></span>
+
+        <!-- Barra superior con buscador rápido y botón de filtros avanzados -->
+        <div class="row g-3 mb-4 align-items-center">
+            <div class="col-12 col-md-8">
+                <form th:action="@{/admin/compras}" method="get" class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-warning">
+                        <i class="fa-solid fa-search"></i>
+                    </span>
                     <input type="text" name="filtro" class="form-control bg-dark text-light border-secondary"
-                        placeholder="Buscar por usuario (nombre/correo), número de boleto o estatus (ej. PENDIENTE, PAGADO)..."
-                        th:value="${filtroActual}">
-                </div>
+                        placeholder="Buscar por usuario (nombre/correo) o número de boleto..." th:value="${filtroActual}">
+                    <input type="hidden" th:if="${rifaFiltroActual != null}" name="rifaFiltro" th:value="${rifaFiltroActual}">
+                    <th:block th:if="${estatusFiltros != null}" th:each="est : ${estatusFiltros}">
+                        <input type="hidden" name="estatusFiltros" th:value="${est}">
+                    </th:block>
+                    <button type="submit" class="btn btn-warning fw-bold">Buscar</button>
+                </form>
             </div>
-            <div class="col-12 col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-warning fw-bold flex-grow-1">Buscar</button>
-                <a th:href="@{/admin/compras}" class="btn btn-outline-secondary">Limpiar</a>
+            
+            <div class="col-12 col-md-4 text-md-end">
+                <!-- Botón nativo de Bootstrap (sin script extra) -->
+                <button class="btn btn-dark border-secondary text-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#panelFiltrosAvanzados" aria-controls="panelFiltrosAvanzados">
+                    <i class="fa-solid fa-sliders me-2 text-warning"></i> Filtros Avanzados
+                </button>
+                <a th:href="@{/admin/compras}" class="btn btn-outline-secondary ms-2" title="Limpiar todo">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
             </div>
-        </form>
+        </div>
+
         <h2 class="text-white">Gestión y Validación de Pagos</h2>
         
         <!-- Contenedor responsivo para la tabla -->
@@ -57,16 +69,13 @@
                         </td>
                         <td th:text="'$' + ${c.montoTotal}">$0.00</td>
                         
-                        <!-- Columna Estado con soporte para CANJEADO -->
                         <td>
                             <span class="badge"
                                 th:classappend="${c.estadoPago == 'PAGADO' ? 'bg-success' : (c.estadoPago == 'CANJEADO' ? 'bg-info text-dark' : 'bg-warning text-dark')}"
                                 th:text="${c.estadoPago}">PENDIENTE</span>
                         </td>
 
-                        <!-- Columna Acciones adaptada -->
                         <td>
-                            <!-- Se muestran las acciones únicamente si el pago está PENDIENTE -->
                             <div class="d-flex flex-wrap gap-1" th:if="${c.estadoPago == 'PENDIENTE'}">
                                 <form th:action="@{/admin/compras/validar/{id}(id=${c.id})}" method="post" class="d-inline">
                                     <input type="hidden" name="estado" value="PAGADO" />
@@ -80,13 +89,100 @@
                                 </form>
                             </div>
                             
-                            <!-- Textos alternativos descriptivos según el estatus -->
                             <span class="text-muted small" th:if="${c.estadoPago == 'PAGADO'}">Completado</span>
                             <span class="text-muted small fw-semibold" th:if="${c.estadoPago == 'CANJEADO'}">Boleto de cortesía canjeado</span>
                         </td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+        <!-- Paginación de 15 elementos -->
+        <nav th:if="${totalPages > 1}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link bg-dark text-light border-secondary"
+                        th:href="@{/admin/compras(page=${currentPage - 1}, filtro=${filtroActual}, rifaFiltro=${rifaFiltroActual}, estatusFiltros=${estatusFiltros})}">
+                        Anterior
+                    </a>
+                </li>
+                <li class="page-item" th:classappend="${i == currentPage} ? 'active'"
+                    th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                    <a class="page-link bg-dark text-light border-secondary"
+                        th:href="@{/admin/compras(page=${i}, filtro=${filtroActual}, rifaFiltro=${rifaFiltroActual}, estatusFiltros=${estatusFiltros})}"
+                        th:text="${i + 1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                    <a class="page-link bg-dark text-light border-secondary"
+                        th:href="@{/admin/compras(page=${currentPage + 1}, filtro=${filtroActual}, rifaFiltro=${rifaFiltroActual}, estatusFiltros=${estatusFiltros})}">
+                        Siguiente
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Panel Lateral fuera del container principal para evitar conflictos de renderizado -->
+    <div class="offcanvas offcanvas-start bg-dark text-light" tabindex="-1" id="panelFiltrosAvanzados" aria-labelledby="panelFiltrosLabel">
+        <div class="offcanvas-header border-bottom border-secondary">
+            <h5 class="offcanvas-title text-warning" id="panelFiltrosLabel">
+                <i class="fa-solid fa-filter me-2"></i> Filtros Avanzados
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <form th:action="@{/admin/compras}" method="get">
+                <input type="hidden" name="filtro" th:value="${filtroActual}">
+
+                <div class="mb-4">
+                    <label for="rifaFiltro" class="form-label text-muted small fw-bold">Filtrar por Rifa</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-secondary border-secondary text-dark">
+                            <i class="fa-solid fa-trophy"></i>
+                        </span>
+                        <input type="text" id="rifaFiltro" name="rifaFiltro" class="form-control bg-secondary text-white border-secondary"
+                            placeholder="ID o Título de la rifa..." th:value="${rifaFiltroActual}">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-muted small fw-bold d-block">Estatus del Pago</label>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="estatusFiltros" value="PENDIENTE" id="chkPendiente"
+                                th:checked="${estatusFiltros != null and #lists.contains(estatusFiltros, 'PENDIENTE')}">
+                            <label class="form-check-label text-light" for="chkPendiente">
+                                <span class="badge bg-warning text-dark me-1">PENDIENTE</span>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="estatusFiltros" value="PAGADO" id="chkPagado"
+                                th:checked="${estatusFiltros != null and #lists.contains(estatusFiltros, 'PAGADO')}">
+                            <label class="form-check-label text-light" for="chkPagado">
+                                <span class="badge bg-success me-1">PAGADO</span>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="estatusFiltros" value="RECHAZADO" id="chkRechazado"
+                                th:checked="${estatusFiltros != null and #lists.contains(estatusFiltros, 'RECHAZADO')}">
+                            <label class="form-check-label text-light" for="chkRechazado">
+                                <span class="badge bg-danger me-1">RECHAZADO</span>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="estatusFiltros" value="CANJEADO" id="chkCanjeado"
+                                th:checked="${estatusFiltros != null and #lists.contains(estatusFiltros, 'CANJEADO')}">
+                            <label class="form-check-label text-light" for="chkCanjeado">
+                                <span class="badge bg-info text-dark me-1">CANJEADO</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-warning fw-bold">Aplicar Filtros</button>
+                    <a th:href="@{/admin/compras}" class="btn btn-outline-light btn-sm">Limpiar Filtros</a>
+                </div>
+            </form>
         </div>
     </div>
 </body>

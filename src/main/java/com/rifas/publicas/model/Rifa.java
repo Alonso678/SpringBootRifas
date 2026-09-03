@@ -53,6 +53,12 @@ public class Rifa {
     @Column(name = "porcentaje_minimo_ventas", nullable = false, precision = 5, scale = 2)
     private BigDecimal porcentajeMinimoVentas = new BigDecimal("70.00");
 
+    @Transient
+    private String numeroGanador;
+
+    @Transient
+    private Integer boletosDescartados;
+
     // --- Getters y Setters ---
 
     public Long getId() {
@@ -141,5 +147,21 @@ public class Rifa {
 
     public void setPorcentajeMinimoVentas(BigDecimal porcentajeMinimoVentas) {
         this.porcentajeMinimoVentas = porcentajeMinimoVentas;
+    }
+
+    public String getNumeroGanador() {
+        return numeroGanador;
+    }
+
+    public void setNumeroGanador(String numeroGanador) {
+        this.numeroGanador = numeroGanador;
+    }
+
+    public Integer getBoletosDescartados() {
+        return boletosDescartados;
+    }
+
+    public void setBoletosDescartados(Integer boletosDescartados) {
+        this.boletosDescartados = boletosDescartados;
     }
 }

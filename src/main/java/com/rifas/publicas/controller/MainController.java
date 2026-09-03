@@ -198,13 +198,38 @@ public class MainController {
         return "redirect:/login?resetSuccess=true";
     }
 
-    // Vista para mostrar el historial de rifas finalizadas o vencidas
     @GetMapping("/rifas/historial")
     public String verHistorialRifas(Model model) {
-        List<Rifa> rifasHistorial = rifaRepository.findByEstadoIn(List.of("VENCIDA", "FINALIZADA"));
-        model.addAttribute("rifas", rifasHistorial);
-        return "rifas-historial";
+        // Obtiene las rifas que ya terminaron o vencieron
+        List<Rifa> rifas = rifaRepository.findByEstadoIn(List.of("FINALIZADA", "VENCIDA"));
+
+        for (Rifa rifa : rifas) {
+            if ("FINALIZADA".equals(rifa.getEstado())) {
+                // Buscar el boleto con estado GANADOR para esta rifa
+                List<Boleto> boletosGanadores = boletoRepository.findByRifaIdAndEstado(rifa.getId(), "GANADOR");
+                if (!boletosGanadores.isEmpty()) {
+                    rifa.setNumeroGanador(String.valueOf(boletosGanadores.get(0).getNumeroBoleto()));
+                } else {
+                    rifa.setNumeroGanador("N/A");
+                }
+
+                // Contar cuántos boletos quedaron en estado DESCARTADO[cite: 5]
+                long totalDescartados = boletoRepository.countByRifaIdAndEstado(rifa.getId(), "DESCARTADO");
+                rifa.setBoletosDescartados((int) totalDescartados);
+            }
+        }
+
+        model.addAttribute("rifas", rifas);
+        return "rifas-historial"; // Tu plantilla actual de Thymeleaf[cite: 5]
     }
+
+    // Vista para mostrar el historial de rifas finalizadas o vencidas
+    // @GetMapping("/rifas/historial")
+    // public String verHistorialRifas(Model model) {
+    //     List<Rifa> rifasHistorial = rifaRepository.findByEstadoIn(List.of("VENCIDA", "FINALIZADA"));
+    //     model.addAttribute("rifas", rifasHistorial);
+    //     return "rifas-historial";
+    // }
 
     @GetMapping("/rifas/{id}")
     public String detalleRifa(@PathVariable("id") Long id, Model model) {
@@ -427,13 +452,18 @@ public class MainController {
     @GetMapping("/admin/compras")
     public String adminCompras(
             @RequestParam(value = "filtro", required = false) String filtro,
+            @RequestParam(value = "rifaFiltro", required = false) String rifaFiltro,
+            @RequestParam(value = "estatusFiltros", required = false) List<String> estatusFiltros,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
             Model model) {
 
-        List<Compra> compras;
+        int currentPage = (page != null) ? page : 0;
+        List<Compra> compras = compraRepository.findAll();
 
+        // 1. Filtrar por texto general
         if (filtro != null && !filtro.trim().isEmpty()) {
             String f = filtro.trim().toLowerCase();
-            compras = compraRepository.findAll().stream()
+            compras = compras.stream()
                     .filter(c -> (c.getUsuario() != null && ((c.getUsuario().getNombre() != null
                             && c.getUsuario().getNombre().toLowerCase().contains(f)) ||
                             (c.getUsuario().getEmail() != null && c.getUsuario().getEmail().toLowerCase().contains(f))))
@@ -442,14 +472,81 @@ public class MainController {
                             (c.getBoletos() != null && c.getBoletos().stream()
                                     .anyMatch(b -> String.valueOf(b.getNumeroBoleto()).contains(f))))
                     .toList();
-        } else {
-            compras = compraRepository.findAll();
         }
 
-        model.addAttribute("compras", compras);
+        // 2. Filtrar por Rifa (ID o Título)
+        if (rifaFiltro != null && !rifaFiltro.trim().isEmpty()) {
+            String rf = rifaFiltro.trim().toLowerCase();
+            compras = compras.stream()
+                    .filter(c -> c.getRifa() != null && (
+                            String.valueOf(c.getRifa().getId()).contains(rf) ||
+                            (c.getRifa().getTitulo() != null && c.getRifa().getTitulo().toLowerCase().contains(rf))
+                    ))
+                    .toList();
+        }
+
+        // 3. Filtrar por Estatus Múltiples (Checkboxes)
+        if (estatusFiltros != null && !estatusFiltros.isEmpty()) {
+            compras = compras.stream()
+                    .filter(c -> c.getEstadoPago() != null && estatusFiltros.contains(c.getEstadoPago()))
+                    .toList();
+        }
+
+        // 4. Ordenar por ID descendente (más reciente primero)
+        compras = compras.stream()
+                .sorted((c1, c2) -> c2.getId().compareTo(c1.getId()))
+                .toList();
+
+        // 5. Paginación manual (8 elementos por página)
+        int pageSize = 8;
+        int totalItems = compras.size();
+        int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+        int startItem = currentPage * pageSize;
+        
+        List<Compra> comprasPaginated;
+        if (totalItems < startItem) {
+            comprasPaginated = List.of();
+        } else {
+            int endItem = Math.min(startItem + pageSize, totalItems);
+            comprasPaginated = compras.subList(startItem, endItem);
+        }
+
+        model.addAttribute("compras", comprasPaginated);
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("totalPages", Math.max(1, totalPages));
         model.addAttribute("filtroActual", filtro);
+        model.addAttribute("rifaFiltroActual", rifaFiltro);
+        model.addAttribute("estatusFiltros", estatusFiltros);
+        
         return "admin-compras";
     }
+
+    // @GetMapping("/admin/compras")
+    // public String adminCompras(
+    //         @RequestParam(value = "filtro", required = false) String filtro,
+    //         Model model) {
+
+    //     List<Compra> compras;
+
+    //     if (filtro != null && !filtro.trim().isEmpty()) {
+    //         String f = filtro.trim().toLowerCase();
+    //         compras = compraRepository.findAll().stream()
+    //                 .filter(c -> (c.getUsuario() != null && ((c.getUsuario().getNombre() != null
+    //                         && c.getUsuario().getNombre().toLowerCase().contains(f)) ||
+    //                         (c.getUsuario().getEmail() != null && c.getUsuario().getEmail().toLowerCase().contains(f))))
+    //                         ||
+    //                         (c.getEstadoPago() != null && c.getEstadoPago().toLowerCase().contains(f)) ||
+    //                         (c.getBoletos() != null && c.getBoletos().stream()
+    //                                 .anyMatch(b -> String.valueOf(b.getNumeroBoleto()).contains(f))))
+    //                 .toList();
+    //     } else {
+    //         compras = compraRepository.findAll();
+    //     }
+
+    //     model.addAttribute("compras", compras);
+    //     model.addAttribute("filtroActual", filtro);
+    //     return "admin-compras";
+    // }
 
     @PostMapping("/admin/compras/validar/{id}")
     public String validarPago(@PathVariable("id") @NonNull Long compraId, @RequestParam("estado") String estado) {

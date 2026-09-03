@@ -94,6 +94,11 @@ public class AdminSorteoController {
                 ganadorBloque = seleccionado;
                 ganadorBloque.setEstado("GANADOR");
                 boletoRepository.save(ganadorBloque);
+
+                // Persistir el estatus FINALIZADA de la rifa
+                rifa.setEstado("FINALIZADA");
+                rifaRepository.save(rifa);
+                
                 session.removeAttribute(sessionKeyDescartados); // Limpiamos sesión para el siguiente bloque
             } else {
                 // De lo contrario, se descarta y se persiste en BD

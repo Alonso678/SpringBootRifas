@@ -6,6 +6,8 @@
     <title th:text="${titulo ?: 'FORTUNARIFAS'}">FORTUNARIFAS</title>
     <link th:href="@{/css/bootstrap.min.css}" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Asegúrate de tener este script en tu layout.html principal -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         body {
             background-color: #0b0f19;
@@ -95,7 +97,7 @@
             ctx.fill();
         }
 
-        for(let i = 0; i < 80; i++) {
+        for (let i = 0; i < 80; i++) {
             parts.push({
                 x: Math.random() * w,
                 y: Math.random() * h,
@@ -122,16 +124,16 @@
             x.fillStyle = "#0b0f19";
             x.fillRect(0, 0, w, h);
 
-            for(let p of parts) {
+            for (let p of parts) {
                 p.y += p.v;
-                if(p.y > h) p.y = 0;
+                if (p.y > h) p.y = 0;
                 x.beginPath();
                 x.fillStyle = "rgba(255, 215, 0, 0.3)";
                 x.arc(p.x, p.y, p.r, 0, Math.PI * 2);
                 x.fill();
             }
 
-            for(let i = coins.length - 1; i >= 0; i--) {
+            for (let i = coins.length - 1; i >= 0; i--) {
                 let c = coins[i];
                 c.y += c.v;
                 c.a += c.spinSpeed;
@@ -163,7 +165,7 @@
 
                 x.restore();
 
-                if(c.y > h + 40) {
+                if (c.y > h + 40) {
                     coins.splice(i, 1);
                 }
             }
