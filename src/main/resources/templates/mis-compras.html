@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"></html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Mis Compras - Sorteos y Rifas</title>
@@ -50,7 +50,6 @@
         }
     </style>
 </head>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <body>
     <div th:fragment="content" class="container py-5">
         <!-- Contenedor superior estilizado y alineado a la derecha sin pegar al borde -->
@@ -75,23 +74,29 @@
                     <span th:utext="${mensajeExito}"></span>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
+
+                <!-- Alerta de error para el reclamo -->
+                <div th:if="${mensajeError}" class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                    <span th:text="${mensajeError}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
                 <h5 class="card-title text-warning"><i class="fa-solid fa-wallet"></i> Programa de Embajadores y Monedero</h5>
         
                 <p class="card-text small mb-1">Tu código para invitar: <strong class="text-white"
                         th:text="${usuario.codigoReferido}"></strong></p>
         
-                <!-- Saldo actual del monedero -->
+                <!-- Saldo actual del monedero sin signo de pesos -->
                 <div class="my-3 p-3 bg-secondary bg-opacity-25 rounded">
-                    <p class="mb-1 text-muted small">Saldo acumulado (10% de ventas):</p>
+                    <p class="mb-1 text-ligth small">Saldo acumulado:</p>
                     <h3 class="text-success fw-bold"
-                        th:text="${'$' + #numbers.formatDecimal(usuario.saldoMonedero, 1, 'DEFAULT', 2, 'DEFAULT')}">$0.00</h3>
+                        th:text="${#numbers.formatDecimal(usuario.saldoMonedero, 1, 'DEFAULT', 2, 'DEFAULT') + ' Pts'}">0.00 Pts</h3>
                 </div>
         
-                <!-- CASO 1: Meta alcanzada ($150+) y NO bloqueado -->
-                <div th:if="${usuario.saldoMonedero >= 150 and !usuario.reclamoBloqueado}" class="alert alert-warning p-3 text-dark">
-                    <strong>¡Meta de $150 alcanzada!</strong>
-                    <p class="small mb-2">Puedes reclamar <strong>un boleto gratis</strong>. Tienes 24 horas antes de que se bloquee el
-                        monedero.</p>
+                <!-- CASO 1: Saldo suficiente para al menos el boleto más económico y NO bloqueado -->
+                <div th:if="${usuario.saldoMonedero.compareTo(precioMinimoBoleto) >= 0 and !usuario.reclamoBloqueado}" class="alert alert-warning p-3 text-dark">
+                    <strong>¡Saldo suficiente para reclamar!</strong>
+                    <p class="small mb-2">Puedes reclamar <strong>un boleto gratis</strong>. Tienes 24 horas antes de que se bloquee el monedero.</p>
                 
                     <!-- Formulario para reclamar un único boleto -->
                     <form th:action="@{/reclamar-boleto-gratis}" method="post">
@@ -99,18 +104,18 @@
                             <label class="form-label small fw-bold">Selecciona la rifa para tu boleto de cortesía:</label>
                             <select name="rifaId" class="form-select form-select-sm" required>
                                 <option value="" disabled selected>Elige una rifa...</option>
-                                <option th:each="rifa : ${rifasActivas}" th:value="${rifa.id}" th:text="${rifa.titulo}"></option>
+                                <option th:each="rifa : ${rifasActivas}" th:value="${rifa.id}" th:text="${rifa.titulo + ' (Costo: $' + rifa.precioBoleto + ')'}"></option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-dark btn-sm w-100 fw-bold">Reclamar mi Boleto Gratis</button>
-                        <p class="small mb-2">"El boleto de cortesía será asignado de forma automática según la disponibilidad actual de la rifa seleccionada"</p>
+                        <p class="small mb-2 mt-2">"El boleto de cortesía será asignado de forma automática según la disponibilidad actual de la rifa seleccionada"</p>
                     </form>
                 </div>
+
                 <!-- CASO 2: Si el reclamo está BLOQUEADO por pasar las 24 horas -->
                 <div th:if="${usuario.reclamoBloqueado}" class="alert alert-danger p-3">
                     <strong>¡Reclamo bloqueado!</strong>
-                    <p class="small mb-1">Se pasaron las 24 horas de plazo. Para desbloquear tu monedero y poder reclamar,
-                        necesitas vender más boletos.</p>
+                    <p class="small mb-1">Se pasaron las 24 horas de plazo. Para desbloquear tu monedero y poder reclamar, necesitas vender más boletos.</p>
                     <p class="small mb-0 fw-bold">Progreso de desbloqueo: <span
                             th:text="${usuario.boletosVendidosTrasBloqueo}">0</span> / 5 boletos</p>
                 </div>
@@ -122,6 +127,7 @@
                 </a>
             </div>
         </div>
+
         <div class="content-card p-4 p-md-5">
             <div class="d-flex align-items-center mb-4">
                 <div class="bg-warning text-dark rounded-circle d-inline-flex align-items-center justify-content-center shadow me-3" style="width: 50px; height: 50px;">
@@ -137,16 +143,15 @@
                 <table class="table table-dark-custom mb-0">
                     <thead>
                         <tr>
-                            <!-- <th class="py-3">ID Compra</th> -->
                             <th class="py-3">Rifa</th>
                             <th class="py-3">Boletos</th>
                             <th class="py-3">Total</th>
                             <th class="py-3">Estado de Pago</th>
+                            <th class="py-3 text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="c : ${compras}" th:if="${c != null}">
-                            <!-- <td class="fw-bold text-warning" th:text="'#' + ${c.id}">1</td> -->
                             <td class="fw-semibold text-white" th:text="${c.rifa.titulo}">Rifa</td>
                             <td>
                                 <span th:each="b : ${c.boletos}" class="badge bg-secondary bg-opacity-50 text-warning border border-warning border-opacity-25 me-1 mb-1" th:text="${b.numeroBoleto}">1</span>
@@ -189,6 +194,7 @@
                     </tbody>
                 </table>
             </div>
+
             <!-- Panel de pago global para compras pendientes -->
             <div class="mt-4 p-4 rounded-3 border border-warning border-opacity-25 bg-dark" th:if="${tienePendientes}">
                 <div class="row align-items-center">
@@ -216,5 +222,6 @@
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

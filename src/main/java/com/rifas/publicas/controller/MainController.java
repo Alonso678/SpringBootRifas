@@ -226,9 +226,10 @@ public class MainController {
     // Vista para mostrar el historial de rifas finalizadas o vencidas
     // @GetMapping("/rifas/historial")
     // public String verHistorialRifas(Model model) {
-    //     List<Rifa> rifasHistorial = rifaRepository.findByEstadoIn(List.of("VENCIDA", "FINALIZADA"));
-    //     model.addAttribute("rifas", rifasHistorial);
-    //     return "rifas-historial";
+    // List<Rifa> rifasHistorial = rifaRepository.findByEstadoIn(List.of("VENCIDA",
+    // "FINALIZADA"));
+    // model.addAttribute("rifas", rifasHistorial);
+    // return "rifas-historial";
     // }
 
     @GetMapping("/rifas/{id}")
@@ -289,23 +290,24 @@ public class MainController {
 
     @GetMapping("/mis-compras")
     public String misCompras(Principal principal, Model model) {
-        if (principal == null)
+        if (principal == null) {
             return "redirect:/login";
+        }
         Usuario usuario = usuarioRepository.findByEmail(principal.getName()).orElseThrow();
         List<Compra> compras = compraRepository.findByUsuarioId(usuario.getId());
+        List<Rifa> rifasActivas = rifaRepository.findByEstado("ACTIVA");
 
-        BigDecimal totalPendiente = compras.stream()
-                .filter(c -> c != null && "PENDIENTE".equals(c.getEstadoPago()) && c.getMontoTotal() != null)
-                .map(c -> c.getMontoTotal())
-                .reduce(BigDecimal.ZERO, (acumulado, actual) -> acumulado.add(actual));
-
-        boolean tienePendientes = totalPendiente.compareTo(BigDecimal.ZERO) > 0;
+        // Calcular dinámicamente el precio del boleto más barato entre las rifas
+        // activas
+        BigDecimal precioMinimoBoleto = rifasActivas.stream()
+                .map(Rifa::getPrecioBoleto)
+                .min(BigDecimal::compareTo)
+                .orElse(new BigDecimal("150"));
 
         model.addAttribute("usuario", usuario);
         model.addAttribute("compras", compras);
-        model.addAttribute("totalPendiente", totalPendiente);
-        model.addAttribute("tienePendientes", tienePendientes);
-        model.addAttribute("rifasActivas", rifaRepository.findByEstado("ACTIVA"));
+        model.addAttribute("rifasActivas", rifasActivas);
+        model.addAttribute("precioMinimoBoleto", precioMinimoBoleto);
 
         return "mis-compras";
     }
@@ -478,10 +480,8 @@ public class MainController {
         if (rifaFiltro != null && !rifaFiltro.trim().isEmpty()) {
             String rf = rifaFiltro.trim().toLowerCase();
             compras = compras.stream()
-                    .filter(c -> c.getRifa() != null && (
-                            String.valueOf(c.getRifa().getId()).contains(rf) ||
-                            (c.getRifa().getTitulo() != null && c.getRifa().getTitulo().toLowerCase().contains(rf))
-                    ))
+                    .filter(c -> c.getRifa() != null && (String.valueOf(c.getRifa().getId()).contains(rf) ||
+                            (c.getRifa().getTitulo() != null && c.getRifa().getTitulo().toLowerCase().contains(rf))))
                     .toList();
         }
 
@@ -502,7 +502,7 @@ public class MainController {
         int totalItems = compras.size();
         int totalPages = (int) Math.ceil((double) totalItems / pageSize);
         int startItem = currentPage * pageSize;
-        
+
         List<Compra> comprasPaginated;
         if (totalItems < startItem) {
             comprasPaginated = List.of();
@@ -517,36 +517,9 @@ public class MainController {
         model.addAttribute("filtroActual", filtro);
         model.addAttribute("rifaFiltroActual", rifaFiltro);
         model.addAttribute("estatusFiltros", estatusFiltros);
-        
+
         return "admin-compras";
     }
-
-    // @GetMapping("/admin/compras")
-    // public String adminCompras(
-    //         @RequestParam(value = "filtro", required = false) String filtro,
-    //         Model model) {
-
-    //     List<Compra> compras;
-
-    //     if (filtro != null && !filtro.trim().isEmpty()) {
-    //         String f = filtro.trim().toLowerCase();
-    //         compras = compraRepository.findAll().stream()
-    //                 .filter(c -> (c.getUsuario() != null && ((c.getUsuario().getNombre() != null
-    //                         && c.getUsuario().getNombre().toLowerCase().contains(f)) ||
-    //                         (c.getUsuario().getEmail() != null && c.getUsuario().getEmail().toLowerCase().contains(f))))
-    //                         ||
-    //                         (c.getEstadoPago() != null && c.getEstadoPago().toLowerCase().contains(f)) ||
-    //                         (c.getBoletos() != null && c.getBoletos().stream()
-    //                                 .anyMatch(b -> String.valueOf(b.getNumeroBoleto()).contains(f))))
-    //                 .toList();
-    //     } else {
-    //         compras = compraRepository.findAll();
-    //     }
-
-    //     model.addAttribute("compras", compras);
-    //     model.addAttribute("filtroActual", filtro);
-    //     return "admin-compras";
-    // }
 
     @PostMapping("/admin/compras/validar/{id}")
     public String validarPago(@PathVariable("id") @NonNull Long compraId, @RequestParam("estado") String estado) {
@@ -642,8 +615,16 @@ public class MainController {
             RedirectAttributes ra) {
         Usuario embajador = usuarioRepository.findByEmail(principal.getName()).orElseThrow();
 
-        if (embajador.getSaldoMonedero().compareTo(new BigDecimal("150")) < 0 || embajador.isReclamoBloqueado()) {
-            ra.addFlashAttribute("mensajeError", "No cumples con los requisitos para reclamar.");
+        // Obtener el precio mínimo de las rifas activas dinámicamente
+        List<Rifa> rifasActivas = rifaRepository.findByEstado("ACTIVA");
+        BigDecimal precioMinimoBoleto = rifasActivas.stream()
+                .map(Rifa::getPrecioBoleto)
+                .min(BigDecimal::compareTo)
+                .orElse(new BigDecimal("150"));
+
+        // Validar si el saldo es menor al boleto más barato o si está bloqueado
+        if (embajador.getSaldoMonedero().compareTo(precioMinimoBoleto) < 0 || embajador.isReclamoBloqueado()) {
+            ra.addFlashAttribute("mensajeError", "No cumples con los requisitos o saldo mínimo para reclamar.");
             return "redirect:/mis-compras";
         }
 
@@ -660,6 +641,15 @@ public class MainController {
         Rifa rifa = rifaRepository.findById(rifaId).orElse(null);
         if (rifa == null) {
             ra.addFlashAttribute("mensajeError", "La rifa seleccionada no es válida.");
+            return "redirect:/mis-compras";
+        }
+
+        // Validar dinámicamente si el saldo del embajador cubre exactamente el costo
+        // del boleto de la rifa elegida
+        if (embajador.getSaldoMonedero().compareTo(rifa.getPrecioBoleto()) < 0) {
+            ra.addFlashAttribute("mensajeError",
+                    "Tu saldo acumulado no es suficiente para canjear un boleto de esta rifa (Costo: $"
+                            + rifa.getPrecioBoleto() + ").");
             return "redirect:/mis-compras";
         }
 
@@ -680,7 +670,7 @@ public class MainController {
         compraCortesía.setMontoTotal(BigDecimal.ZERO);
         compraCortesía.setFechaCompra(LocalDateTime.now());
         compraCortesía.setBoletos(List.of(boleto));
-        compraCortesía = compraRepository.save(compraCortesía);
+        compraRepository.save(compraCortesía);
 
         boleto.setEstado("CANJEADO");
         boleto.setUsuario(embajador);
@@ -691,19 +681,19 @@ public class MainController {
             BoletoDigital digital = new BoletoDigital();
             digital.setBoleto(boleto);
             digital.setFechaEmision(LocalDateTime.now());
-            digital.setRandomState(java.util.UUID.randomUUID().toString()); // <--- Agrega esto
+            digital.setRandomState(java.util.UUID.randomUUID().toString());
             digital.setSelloDigital("PENDIENTE_FIRMA");
             boletoDigitalRepository.save(digital);
         }
-        // ----------------------------------------------
 
-        embajador.setSaldoMonedero(BigDecimal.ZERO);
+        // Actualizar el monedero restando únicamente el valor del boleto canjeado
+        embajador.setSaldoMonedero(embajador.getSaldoMonedero().subtract(rifa.getPrecioBoleto()));
         embajador.setFechaMetaCompletada(null);
         usuarioRepository.save(embajador);
 
         ra.addFlashAttribute("mensajeExito",
                 "El boleto de cortesía asignado es el Boleto no. " + boleto.getNumeroBoleto()
-                        + "<br>Tu monedero se ha reiniciado.");
+                        + "<br>Tu monedero se ha actualizado.");
         return "redirect:/mis-compras";
     }
 }
