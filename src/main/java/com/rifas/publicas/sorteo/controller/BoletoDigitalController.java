@@ -124,8 +124,9 @@ public class BoletoDigitalController {
             boolean isAdmin = auth.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
             if (!isAdmin) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Acceso denegado: Se requiere rol de administrador para verificar boletos.");
+                model.addAttribute("valido", false);
+                model.addAttribute("mensaje", "Acceso denegado: Se requiere rol de administrador para verificar boletos.");
+                return "sorteo/resultado-verificacion";
             }
         }
 
