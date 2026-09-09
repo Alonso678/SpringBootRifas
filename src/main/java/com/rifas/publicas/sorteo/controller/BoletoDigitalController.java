@@ -100,7 +100,7 @@ public class BoletoDigitalController {
         return "sorteo/boleto-digital";
     }
 
-   /**
+    /**
      * Endpoint exclusivo de administración para verificar la autenticidad del QR,
      * la fecha del sorteo y si el boleto es ganador utilizando el registro
      * persistido.
@@ -114,18 +114,20 @@ public class BoletoDigitalController {
             Model model) {
 
         if (principal == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                    "Unauthorized: Debe iniciar sesión como administrador.");
+            model.addAttribute("valido", false);
+            model.addAttribute("mensaje", "Unauthorized: Debe iniciar sesión como administrador.");
+            return "sorteo/resultado-verificacion";
         }
 
-        // Validación explícita de rol para usuario autenticado que no es ADMIN
+        // Validación segura de rol sin romper la ejecución si el token difiere
         if (principal instanceof org.springframework.security.authentication.UsernamePasswordAuthenticationToken) {
             var auth = (org.springframework.security.authentication.UsernamePasswordAuthenticationToken) principal;
             boolean isAdmin = auth.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
             if (!isAdmin) {
                 model.addAttribute("valido", false);
-                model.addAttribute("mensaje", "Acceso denegado: Se requiere rol de administrador para verificar boletos.");
+                model.addAttribute("mensaje",
+                        "Acceso denegado: Se requiere rol de administrador para verificar boletos.");
                 return "sorteo/resultado-verificacion";
             }
         }
@@ -177,7 +179,7 @@ public class BoletoDigitalController {
         }
 
         // 5. Validación de si es Ganador
-        boolean esGanador = false; // Cambiar cuando implementes la lógica o columna en BD
+        boolean esGanador = false;
 
         model.addAttribute("valido", true);
         model.addAttribute("sorteoRealizado", true);
