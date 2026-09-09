@@ -5,6 +5,7 @@ import com.rifas.publicas.repository.*;
 import com.rifas.publicas.service.EmailService;
 import com.rifas.publicas.sorteo.model.BoletoDigital;
 import com.rifas.publicas.sorteo.repository.BoletoDigitalRepository;
+import com.rifas.publicas.sorteo.service.CryptoService;
 
 import jakarta.validation.Valid;
 
@@ -43,6 +44,7 @@ public class MainController {
     private final EmailService emailService;
     private final Compraboletosrepository compraBoletosRepository;
     private final BoletoDigitalRepository boletoDigitalRepository;
+    private final CryptoService cryptoService;
 
     // 1. Inyectamos la URL base desde el properties
     @Value("${app.base-url}")
@@ -51,7 +53,7 @@ public class MainController {
     public MainController(RifaRepository rifaRepository, BoletoRepository boletoRepository,
             CompraRepository compraRepository, UsuarioRepository usuarioRepository,
             PasswordEncoder passwordEncoder, EmailService emailService, Compraboletosrepository compraBoletosRepository,
-            BoletoDigitalRepository boletoDigitalRepository) {
+            BoletoDigitalRepository boletoDigitalRepository, CryptoService cryptoService) {
         this.rifaRepository = rifaRepository;
         this.boletoRepository = boletoRepository;
         this.compraRepository = compraRepository;
@@ -60,6 +62,7 @@ public class MainController {
         this.emailService = emailService;
         this.compraBoletosRepository = compraBoletosRepository;
         this.boletoDigitalRepository = boletoDigitalRepository;
+        this.cryptoService = cryptoService;
     }
 
     @GetMapping("/")
@@ -555,6 +558,12 @@ public class MainController {
         for (Boleto b : compra.getBoletos()) {
             if ("PAGADO".equals(estado)) {
                 b.setEstado("PAGADO");
+                String randomState = cryptoService.generarRandomState();
+                String sello = cryptoService.generarSelloDigital(
+                        b.getId(),
+                        String.valueOf(b.getNumeroBoleto()),
+                        b.getUsuario().getEmail(),
+                        randomState);
 
                 // ---> GENERAR BOLETO DIGITAL AUTOMÁTICAMENTE <---
                 boolean yaExiste = boletoDigitalRepository.existsByBoletoId(b.getId());
@@ -562,8 +571,8 @@ public class MainController {
                     BoletoDigital digital = new BoletoDigital();
                     digital.setBoleto(b);
                     digital.setFechaEmision(LocalDateTime.now());
-                    digital.setRandomState(java.util.UUID.randomUUID().toString()); // <--- Agrega esto
-                    digital.setSelloDigital("PENDIENTE_FIRMA"); // <--- O el valor que requiera tu lógica
+                    digital.setRandomState(randomState); // <--- Agrega esto
+                    digital.setSelloDigital(sello); 
                     boletoDigitalRepository.save(digital);
                 }
                 // ------------------------------------------------
@@ -679,10 +688,16 @@ public class MainController {
         // ---> GENERAR BOLETO DIGITAL PARA CORTESÍA <---
         if (!boletoDigitalRepository.existsByBoletoId(boleto.getId())) {
             BoletoDigital digital = new BoletoDigital();
+            String randomState = cryptoService.generarRandomState();
+                String sello = cryptoService.generarSelloDigital(
+                        boleto.getId(),
+                        String.valueOf(boleto.getNumeroBoleto()),
+                        boleto.getUsuario().getEmail(),
+                        randomState);
             digital.setBoleto(boleto);
             digital.setFechaEmision(LocalDateTime.now());
-            digital.setRandomState(java.util.UUID.randomUUID().toString());
-            digital.setSelloDigital("PENDIENTE_FIRMA");
+            digital.setRandomState(randomState);
+            digital.setSelloDigital(sello);
             boletoDigitalRepository.save(digital);
         }
 

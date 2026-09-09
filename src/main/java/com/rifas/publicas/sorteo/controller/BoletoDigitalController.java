@@ -47,13 +47,16 @@ public class BoletoDigitalController {
 
     private final SorteoService sorteoService;
 
-    BoletoDigitalController(BoletoDigitalService boletoDigitalService, BoletoRepository boletoRepository, BoletoDigitalRepository boletoDigitalRepository, ConfigSorteoRepository configSorteoRepository, RifaRepository rifaRepository, SorteoService sorteoService) {
+    private final CryptoService cryptoService;
+
+    BoletoDigitalController(BoletoDigitalService boletoDigitalService, BoletoRepository boletoRepository, BoletoDigitalRepository boletoDigitalRepository, ConfigSorteoRepository configSorteoRepository, RifaRepository rifaRepository, SorteoService sorteoService, CryptoService cryptoService) {
         this.boletoDigitalService = boletoDigitalService;
         this.boletoRepository = boletoRepository;
         this.boletoDigitalRepository = boletoDigitalRepository;
         this.configSorteoRepository = configSorteoRepository;
         this.rifaRepository = rifaRepository;
-        this.sorteoService = sorteoService; 
+        this.sorteoService = sorteoService;
+        this.cryptoService = cryptoService;
     }
 
     /**
@@ -63,8 +66,30 @@ public class BoletoDigitalController {
     public String verBoletoDigital(@PathVariable Long boletoId, Model model) {
         Boleto boleto = boletoRepository.findById(boletoId)
                 .orElseThrow(() -> new RuntimeException("Boleto no encontrado"));
-        BoletoDigital boletoDigital = boletoDigitalRepository.findByBoletoId(boletoId)
-                .orElseThrow(() -> new RuntimeException("El boleto digital aún no ha sido emitido"));
+
+        BoletoDigital boletoDigital = boletoDigitalRepository.findByBoletoId(boletoId).orElse(null);
+
+        // Generación bajo demanda si no existe o está pendiente de firma
+        if (boletoDigital == null || "PENDIENTE_FIRMA".equals(boletoDigital.getSelloDigital())) {
+            if ("PAGADO".equals(boleto.getEstado()) || "CANJEADO".equals(boleto.getEstado())) {
+                if (boletoDigital == null) {
+                    boletoDigital = new BoletoDigital();
+                    boletoDigital.setBoleto(boleto);
+                    boletoDigital.setFechaEmision(java.time.LocalDateTime.now());
+                }
+                String randomState = cryptoService.generarRandomState();
+                String sello = cryptoService.generarSelloDigital(
+                        boleto.getId(),
+                        String.valueOf(boleto.getNumeroBoleto()),
+                        boleto.getUsuario() != null ? boleto.getUsuario().getEmail() : "sistema@rifas.com",
+                        randomState);
+                boletoDigital.setRandomState(randomState);
+                boletoDigital.setSelloDigital(sello);
+                boletoDigital = boletoDigitalRepository.save(boletoDigital);
+            } else {
+                throw new RuntimeException("El boleto digital aún no ha sido emitido o no está pagado");
+            }
+        }
 
         String qrBase64 = boletoDigitalService.generarQrBoletoDigitalBase64(boletoId);
 

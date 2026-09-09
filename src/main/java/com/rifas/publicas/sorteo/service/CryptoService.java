@@ -1,18 +1,18 @@
 package com.rifas.publicas.sorteo.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.UUID;
 
 @Service
 public class CryptoService {
 
-    // Llave secreta para la firma (en un entorno de producción ideal, esto va en application.properties)
-    private static final String SECRET_KEY = "FortunaRifasSecureSecretKeyDigitalTicket2026";
+    @Value("${app.sorteo.secret-key}")
+    private String secretKey;
     private static final String HMAC_ALGORITHM = "HmacSHA256";
 
     /**
@@ -30,7 +30,7 @@ public class CryptoService {
             // Cadena de datos que conforma la identidad inalterable del boleto
             String datosAFirmar = boletoId + "|" + numeroBoleto + "|" + usuarioEmail + "|" + randomState;
 
-            SecretKeySpec secretKeySpec = new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
+            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
             Mac mac = Mac.getInstance(HMAC_ALGORITHM);
             mac.init(secretKeySpec);
 

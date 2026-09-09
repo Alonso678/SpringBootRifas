@@ -21,6 +21,10 @@
         <!-- Detalles del Boleto -->
         <div class="space-y-3 text-left mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
             <div class="flex justify-between">
+                <span class="font-semibold text-slate-700">Participa por:</span>
+                <span class="text-gray-600" th:text="${boleto.rifa.titulo}">Título de la Rifa</span>
+            </div>
+            <div class="flex justify-between">
                 <span class="font-semibold text-slate-700">Número de Boleto:</span>
                 <span class="text-indigo-600 font-bold text-lg" th:text="'# ' + ${boleto.numeroBoleto}"># 00</span>
             </div>
@@ -32,6 +36,14 @@
                 <span class="font-semibold text-slate-700">Fecha de Emisión:</span>
                 <span class="text-gray-600"
                     th:text="${#temporals.format(boletoDigital.fechaEmision, 'dd/MM/yyyy HH:mm')}">01/01/2026</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="font-semibold text-slate-700">Fecha del Sorteo:</span>
+                <span class="text-gray-600" th:text="${#temporals.format(boleto.rifa.fechaSorteo, 'dd/MM/yyyy HH:mm')}">01/01/2027</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="font-semibold text-slate-700">Precio del Boleto:</span>
+                <span class="text-gray-600" th:text="${'$' + boleto.rifa.precioBoleto + ' MXN'}">$0.00 MXN</span>
             </div>
         </div>
 

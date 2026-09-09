@@ -163,8 +163,13 @@ public class BoletoDigitalService {
             detailsTable.addCell(createCell("ID de Registro:", labelFont, PdfPCell.NO_BORDER, Element.ALIGN_RIGHT));
             detailsTable.addCell(createCell(" " + boleto.getId(), valueFont, PdfPCell.NO_BORDER, Element.ALIGN_LEFT));
 
-            // Formateo seguro de fecha y precio
-            String fechaSorteoStr = rifa.getFechaSorteo() != null ? rifa.getFechaSorteo().toString() : "Por definir";
+            // Código corregido con formato legible (ej: 01/01/2027 15:45)
+            String fechaSorteoStr = "Por definir";
+            if (rifa.getFechaSorteo() != null) {
+                java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter
+                        .ofPattern("dd/MM/yyyy HH:mm");
+                fechaSorteoStr = rifa.getFechaSorteo().format(formatter);
+            }
             detailsTable.addCell(createCell("Fecha del Sorteo:", labelFont, PdfPCell.NO_BORDER, Element.ALIGN_RIGHT));
             detailsTable.addCell(createCell(" " + fechaSorteoStr, valueFont, PdfPCell.NO_BORDER, Element.ALIGN_LEFT));
 
