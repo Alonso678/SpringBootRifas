@@ -100,31 +100,11 @@ public class BoletoDigitalController {
         return "sorteo/boleto-digital";
     }
 
-    /**
-     * Endpoint para que el usuario descargue su boleto oficial en formato PDF.
-     */
-    @GetMapping("/boleto/digital/{boletoId}/pdf")
-    public ResponseEntity<byte[]> descargarBoletoPdf(@PathVariable Long boletoId) {
-        try {
-            byte[] pdfBytes = boletoDigitalService.generarPdfBoleto(boletoId);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("attachment", "BoletoDigital-" + boletoId + ".pdf");
-
-            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
-        } catch (Exception e) {
-            // Maneja el error apropiadamente (puedes registrarlo con un log)
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
+   /**
      * Endpoint exclusivo de administración para verificar la autenticidad del QR,
      * la fecha del sorteo y si el boleto es ganador utilizando el registro
      * persistido.
      */
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/sorteo/verificar")
     public String verificarBoletoQr(
             @RequestParam Long id,
@@ -136,6 +116,17 @@ public class BoletoDigitalController {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                     "Unauthorized: Debe iniciar sesión como administrador.");
+        }
+
+        // Validación explícita de rol para usuario autenticado que no es ADMIN
+        if (principal instanceof org.springframework.security.authentication.UsernamePasswordAuthenticationToken) {
+            var auth = (org.springframework.security.authentication.UsernamePasswordAuthenticationToken) principal;
+            boolean isAdmin = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            if (!isAdmin) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Acceso denegado: Se requiere rol de administrador para verificar boletos.");
+            }
         }
 
         // 1. Buscar el boleto y su rifa asociada
