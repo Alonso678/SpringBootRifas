@@ -14,6 +14,8 @@ import com.rifas.publicas.model.Boleto;
 import com.rifas.publicas.repository.BoletoRepository;
 import com.rifas.publicas.sorteo.model.BoletoDigital;
 import com.rifas.publicas.sorteo.repository.BoletoDigitalRepository;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -290,8 +292,11 @@ public class BoletoDigitalService {
         });
     }
 
+    @Value("${app.base-url}")
+    private String baseUrl;
+
     private String construirContenidoQr(BoletoDigital bd) {
-        return "http://localhost:8080/api/sorteo/verificar?id=" + bd.getBoleto().getId()
+        return baseUrl + "/api/sorteo/verificar?id=" + bd.getBoleto().getId()
                 + "&rs=" + bd.getRandomState()
                 + "&sello=" + bd.getSelloDigital();
     }
