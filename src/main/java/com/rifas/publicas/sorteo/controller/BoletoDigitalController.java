@@ -100,7 +100,6 @@ public class BoletoDigitalController {
      * la fecha del sorteo y si el boleto es ganador utilizando el registro
      * persistido.
      */
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/sorteo/verificar")
     public String verificarBoletoQr(
             @RequestParam Long id,
