@@ -47,16 +47,13 @@ public class BoletoDigitalController {
 
     private final SorteoService sorteoService;
 
-    private final CryptoService cryptoService;
-
-    BoletoDigitalController(BoletoDigitalService boletoDigitalService, BoletoRepository boletoRepository, BoletoDigitalRepository boletoDigitalRepository, ConfigSorteoRepository configSorteoRepository, RifaRepository rifaRepository, SorteoService sorteoService, CryptoService cryptoService) {
+    BoletoDigitalController(BoletoDigitalService boletoDigitalService, BoletoRepository boletoRepository, BoletoDigitalRepository boletoDigitalRepository, ConfigSorteoRepository configSorteoRepository, RifaRepository rifaRepository, SorteoService sorteoService) {
         this.boletoDigitalService = boletoDigitalService;
         this.boletoRepository = boletoRepository;
         this.boletoDigitalRepository = boletoDigitalRepository;
         this.configSorteoRepository = configSorteoRepository;
         this.rifaRepository = rifaRepository;
-        this.sorteoService = sorteoService;
-        this.cryptoService = cryptoService;
+        this.sorteoService = sorteoService; 
     }
 
     /**
@@ -66,30 +63,8 @@ public class BoletoDigitalController {
     public String verBoletoDigital(@PathVariable Long boletoId, Model model) {
         Boleto boleto = boletoRepository.findById(boletoId)
                 .orElseThrow(() -> new RuntimeException("Boleto no encontrado"));
-
-        BoletoDigital boletoDigital = boletoDigitalRepository.findByBoletoId(boletoId).orElse(null);
-
-        // Generación bajo demanda si no existe o está pendiente de firma
-        if (boletoDigital == null || "PENDIENTE_FIRMA".equals(boletoDigital.getSelloDigital())) {
-            if ("PAGADO".equals(boleto.getEstado()) || "CANJEADO".equals(boleto.getEstado())) {
-                if (boletoDigital == null) {
-                    boletoDigital = new BoletoDigital();
-                    boletoDigital.setBoleto(boleto);
-                    boletoDigital.setFechaEmision(java.time.LocalDateTime.now());
-                }
-                String randomState = cryptoService.generarRandomState();
-                String sello = cryptoService.generarSelloDigital(
-                        boleto.getId(),
-                        String.valueOf(boleto.getNumeroBoleto()),
-                        boleto.getUsuario() != null ? boleto.getUsuario().getEmail() : "sistema@rifas.com",
-                        randomState);
-                boletoDigital.setRandomState(randomState);
-                boletoDigital.setSelloDigital(sello);
-                boletoDigital = boletoDigitalRepository.save(boletoDigital);
-            } else {
-                throw new RuntimeException("El boleto digital aún no ha sido emitido o no está pagado");
-            }
-        }
+        BoletoDigital boletoDigital = boletoDigitalRepository.findByBoletoId(boletoId)
+                .orElseThrow(() -> new RuntimeException("El boleto digital aún no ha sido emitido"));
 
         String qrBase64 = boletoDigitalService.generarQrBoletoDigitalBase64(boletoId);
 
@@ -101,10 +76,30 @@ public class BoletoDigitalController {
     }
 
     /**
+     * Endpoint para que el usuario descargue su boleto oficial en formato PDF.
+     */
+    @GetMapping("/boleto/digital/{boletoId}/pdf")
+    public ResponseEntity<byte[]> descargarBoletoPdf(@PathVariable Long boletoId) {
+        try {
+            byte[] pdfBytes = boletoDigitalService.generarPdfBoleto(boletoId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "BoletoDigital-" + boletoId + ".pdf");
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            // Maneja el error apropiadamente (puedes registrarlo con un log)
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
      * Endpoint exclusivo de administración para verificar la autenticidad del QR,
      * la fecha del sorteo y si el boleto es ganador utilizando el registro
      * persistido.
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/sorteo/verificar")
     public String verificarBoletoQr(
             @RequestParam Long id,
@@ -114,22 +109,8 @@ public class BoletoDigitalController {
             Model model) {
 
         if (principal == null) {
-            model.addAttribute("valido", false);
-            model.addAttribute("mensaje", "Unauthorized: Debe iniciar sesión como administrador.");
-            return "sorteo/resultado-verificacion";
-        }
-
-        // Validación segura de rol sin romper la ejecución si el token difiere
-        if (principal instanceof org.springframework.security.authentication.UsernamePasswordAuthenticationToken) {
-            var auth = (org.springframework.security.authentication.UsernamePasswordAuthenticationToken) principal;
-            boolean isAdmin = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            if (!isAdmin) {
-                model.addAttribute("valido", false);
-                model.addAttribute("mensaje",
-                        "Acceso denegado: Se requiere rol de administrador para verificar boletos.");
-                return "sorteo/resultado-verificacion";
-            }
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Unauthorized: Debe iniciar sesión como administrador.");
         }
 
         // 1. Buscar el boleto y su rifa asociada
@@ -179,7 +160,7 @@ public class BoletoDigitalController {
         }
 
         // 5. Validación de si es Ganador
-        boolean esGanador = false;
+        boolean esGanador = false; // Cambiar cuando implementes la lógica o columna en BD
 
         model.addAttribute("valido", true);
         model.addAttribute("sorteoRealizado", true);

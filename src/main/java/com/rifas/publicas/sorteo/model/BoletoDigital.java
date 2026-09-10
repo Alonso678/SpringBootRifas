@@ -13,8 +13,8 @@ public class BoletoDigital {
     private Long id;
 
     // Relación directa mapeada a la columna boleto_id de la BD
-    @OneToOne
-    @JoinColumn(name = "boleto_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "boleto_id", unique = true, nullable = false)
     private Boleto boleto;
 
     @Column(name = "random_state", unique = true, nullable = false)

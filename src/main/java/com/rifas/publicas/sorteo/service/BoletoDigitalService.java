@@ -17,6 +17,7 @@ import com.rifas.publicas.sorteo.repository.BoletoDigitalRepository;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.time.format.DateTimeFormatter;
@@ -237,58 +238,28 @@ public class BoletoDigitalService {
         return cell;
     }
 
-    // public byte[] generarPdfBoleto(Long boletoId) {
-    // Boleto boleto = boletoRepository.findById(boletoId)
-    // .orElseThrow(() -> new RuntimeException("Boleto no encontrado"));
-    // BoletoDigital boletoDigital = obtenerOCrearBoletoDigital(boletoId);
-    // String contenidoQr = construirContenidoQr(boletoDigital);
-
-    // try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-    // Document document = new Document();
-    // PdfWriter.getInstance(document, baos);
-    // document.open();
-
-    // document.add(new Paragraph("=== BOLETO DIGITAL OFICIAL ==="));
-    // document.add(new Paragraph("Rifa / Sorteo Público"));
-    // document.add(new Paragraph(" "));
-    // document.add(new Paragraph("Número de Boleto: " + boleto.getNumeroBoleto()));
-    // document.add(new Paragraph("ID de Registro: " + boleto.getId()));
-    // document.add(new Paragraph("Sello Criptográfico (HMAC): " +
-    // boletoDigital.getSelloDigital()));
-    // document.add(new Paragraph(" "));
-
-    // // Generar imagen QR en bytes para el PDF
-    // QRCodeWriter qrCodeWriter = new QRCodeWriter();
-    // BitMatrix bitMatrix = qrCodeWriter.encode(contenidoQr, BarcodeFormat.QR_CODE,
-    // 150, 150);
-    // ByteArrayOutputStream qrOs = new ByteArrayOutputStream();
-    // MatrixToImageWriter.writeToStream(bitMatrix, "PNG", qrOs);
-
-    // Image qrImage = Image.getInstance(qrOs.toByteArray());
-    // qrImage.setAlignment(Image.ALIGN_CENTER);
-    // document.add(qrImage);
-
-    // document.close();
-    // return baos.toByteArray();
-    // } catch (Exception e) {
-    // throw new RuntimeException("Error al generar el PDF del boleto", e);
-    // }
-    // }
-
-
+    // --- MÉTODO CENTRAL PARA OBTENER O CREAR EL BOLETO DIGITAL ---
+    @Transactional
     public BoletoDigital obtenerOCrearBoletoDigital(Long boletoId) {
         return boletoDigitalRepository.findByBoletoId(boletoId).orElseGet(() -> {
-            Boleto boleto = boletoRepository.findById(boletoId)
-                    .orElseThrow(() -> new RuntimeException("Boleto no encontrado"));
-            String randomState = cryptoService.generarRandomState();
-            String sello = cryptoService.generarSelloDigital(boleto.getId(), String.valueOf(boleto.getNumeroBoleto()),
-                    "cliente@rifas.com", randomState);
+            try {
+                Boleto boleto = boletoRepository.findById(boletoId)
+                        .orElseThrow(() -> new RuntimeException("Boleto no encontrado"));
+                
+                String randomState = cryptoService.generarRandomState();
+                String sello = cryptoService.generarSelloDigital(boleto.getId(), String.valueOf(boleto.getNumeroBoleto()),
+                        "cliente@rifas.com", randomState);
 
-            BoletoDigital nuevo = new BoletoDigital();
-            nuevo.setBoleto(boleto); // Le pasas el objeto Boleto completo
-            nuevo.setRandomState(randomState);
-            nuevo.setSelloDigital(sello);
-            return boletoDigitalRepository.save(nuevo);
+                BoletoDigital nuevo = new BoletoDigital();
+                nuevo.setBoleto(boleto);
+                nuevo.setRandomState(randomState);
+                nuevo.setSelloDigital(sello);
+                
+                return boletoDigitalRepository.save(nuevo);
+            } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                return boletoDigitalRepository.findByBoletoId(boletoId)
+                        .orElseThrow(() -> new RuntimeException("Error al sincronizar el boleto digital", e));
+            }
         });
     }
 
