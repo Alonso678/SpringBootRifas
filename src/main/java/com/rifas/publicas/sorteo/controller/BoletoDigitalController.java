@@ -113,6 +113,17 @@ public class BoletoDigitalController {
                     "Unauthorized: Debe iniciar sesión como administrador.");
         }
 
+        // Validación manual de rol para evitar Whitelabel Error Page en usuarios USER
+        boolean esAdmin = ((org.springframework.security.authentication.UsernamePasswordAuthenticationToken) principal)
+                .getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!esAdmin) {
+            model.addAttribute("valido", false);
+            model.addAttribute("mensaje", "Acceso denegado: No cuentas con privilegios de administrador para verificar boletos.");
+            return "sorteo/resultado-verificacion"; // O tu vista de acceso denegado
+        }
+
         // 1. Buscar el boleto y su rifa asociada
         Boleto boleto = boletoRepository.findById(id).orElse(null);
         if (boleto == null) {
@@ -160,7 +171,7 @@ public class BoletoDigitalController {
         }
 
         // 5. Validación de si es Ganador
-        boolean esGanador = false; // Cambiar cuando implementes la lógica o columna en BD
+        boolean esGanador = false; 
 
         model.addAttribute("valido", true);
         model.addAttribute("sorteoRealizado", true);
