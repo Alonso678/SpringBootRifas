@@ -89,7 +89,8 @@ public class BoletoDigitalController {
 
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
         } catch (Exception e) {
-            // Maneja el error apropiadamente (puedes registrarlo con un log)
+            // AHORA SÍ VEREMOS EL ERROR EN PRODUCCIÓN
+            log.error("!!! [PROD-DEBUG] Error crítico en el endpoint de descarga para el boleto ID: {}", boletoId, e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
