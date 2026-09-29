@@ -312,6 +312,19 @@ public class MainController {
         model.addAttribute("rifasActivas", rifasActivas);
         model.addAttribute("precioMinimoBoleto", precioMinimoBoleto);
 
+        BigDecimal totalPendiente = compras.stream()
+                .filter(c -> c != null && "PENDIENTE".equals(c.getEstadoPago()) && c.getMontoTotal() != null)
+                .map(c -> c.getMontoTotal())
+                .reduce(BigDecimal.ZERO, (acumulado, actual) -> acumulado.add(actual));
+
+        boolean tienePendientes = totalPendiente.compareTo(BigDecimal.ZERO) > 0;
+
+        model.addAttribute("usuario", usuario); 
+        model.addAttribute("compras", compras);
+        model.addAttribute("totalPendiente", totalPendiente);
+        model.addAttribute("tienePendientes", tienePendientes);
+        model.addAttribute("rifasActivas", rifaRepository.findByEstado("ACTIVA"));
+
         return "mis-compras";
     }
 
