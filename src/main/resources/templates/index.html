@@ -159,7 +159,7 @@
         <img src="/assets/entra-para-ganar.png" th:src="@{/assets/entra-para-ganar.png}" alt="Entra para ganar">
     </div>
     
-    <!-- Modal Informativo de Referidos (Se abre al hacer clic en el flotante) -->
+    <!-- Modal Informativo de Puntos y Referidos (Se abre al hacer clic en el flotante) -->
     <div id="referralModal" class="custom-modal-overlay" style="display: none;">
         <div class="custom-modal-card bg-dark text-white border border-secondary shadow-lg">
             <!-- Botón de Cerrar -->
@@ -168,31 +168,28 @@
     
             <!-- Cabecera / Imagen Visual -->
             <div class="text-center p-4 bg-black bg-opacity-25 rounded-top">
-                <span class="badge badge-gold px-3 py-1 rounded-pill mb-2 text-uppercase tracking-wider">✨ Bono de
-                    Bienvenida</span>
-                <div style="font-size: 3.5rem;" class="my-2">🎁 🎟️ 🤝</div>
-                <h3 class="fw-bold text-warning m-0">¡Multiplica tus Oportunidades!</h3>
+                <span class="badge badge-gold px-3 py-1 rounded-pill mb-2 text-uppercase tracking-wider">⭐ Sistema de Puntos</span>
+                <div style="font-size: 3.5rem;" class="my-2">🎯 🎟️ 🌟</div>
+                <h3 class="fw-bold text-warning m-0">¡Acumula Puntos y Canjea Boletos!</h3>
             </div>
     
             <!-- Cuerpo del Modal -->
             <div class="p-4 text-center">
                 <p class="text-light small mb-4" style="line-height: 1.5;">
-                    ¡Haz que tus amigos jueguen y gana! Comparte tu enlace único de referidos y obtén <strong>boletos
-                        gratis</strong> cada vez que alcances la meta de <strong>10 o más boletos vendidos</strong> usando tu
-                    código.
+                    ¡Invita a tus amigos y gana! Cada boleto que compren usando tu enlace único se convierte en <strong>puntos acumulables</strong> que podrás canjear directamente por <strong>boletos gratis</strong> para tus rifas favoritas.
                 </p>
             
-                <!-- Pasos rápidos claros -->
+                <!-- Pasos rápidos claros orientados a puntos -->
                 <div class="row g-2 mb-4 text-start bg-black bg-opacity-50 p-3 rounded-3 border border-secondary">
-                    <div class="col-12 small text-light mb-1">🚀 <strong>1. Regístrate gratis</strong> en segundos.</div>
-                    <div class="col-12 small text-light mb-1">🔗 <strong>2. Comparte</strong> tu enlace con amigos.</div>
-                    <div class="col-12 small text-light">🏆 <strong>3. Vende 10+ boletos</strong> y reclama tus recompensas.</div>
+                    <div class="col-12 small text-light mb-1">🚀 <strong>1. Regístrate gratis</strong> para obtener tu enlace personal.</div>
+                    <div class="col-12 small text-light mb-1">🔗 <strong>2. Comparte</strong> tu enlace con amigos y conocidos.</div>
+                    <div class="col-12 small text-light">🎁 <strong>3. Suma puntos</strong> con cada compra y canjéalos por boletos de regalo.</div>
                 </div>
             
                 <!-- Botones de Acción -->
                 <div class="d-grid gap-2">
-                    <a href="/registro" class="btn btn-warning fw-bold py-2">Crear Cuenta y Obtener Enlace</a>
-                    <!-- Botón secundario con mejor estilo -->
+                    <a href="/registro" class="btn btn-warning fw-bold py-2">Crear Cuenta y Empezar a Sumar</a>
+                    <!-- Botón secundario -->
                     <button type="button" class="btn btn-outline-secondary btn-sm w-100 text-light border-secondary py-2 mt-2"
                         onclick="closeReferralModal()">Seguir viendo rifas</button>
                 </div>
