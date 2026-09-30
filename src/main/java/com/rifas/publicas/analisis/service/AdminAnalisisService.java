@@ -27,6 +27,21 @@ public class AdminAnalisisService {
         return rifaRepository.findAll();
     }
 
+    public void verificarYActualizarRifasVencidas(Long administradorId) {
+        // 1. Trae todas las rifas que siguen marcadas como ACTIVA para este
+        // administrador
+        List<Rifa> rifasActivas = rifaRepository.findByAdministradorIdAndEstado(administradorId, "ACTIVA");
+        LocalDateTime ahora = LocalDateTime.now();
+
+        // 2. Recórrelas y actualiza las que ya hayan superado su fecha de sorteo
+        for (Rifa r : rifasActivas) {
+            if (r.getFechaSorteo() != null && r.getFechaSorteo().isBefore(ahora)) {
+                r.setEstado("VENCIDA");
+                rifaRepository.save(r);
+            }
+        }
+    }
+
     public AnalisisDashboardDTO calcularMetricasRifa(Long rifaId) {
         Rifa rifa = rifaRepository.findById(rifaId)
                 .orElseThrow(() -> new IllegalArgumentException("Rifa no encontrada"));

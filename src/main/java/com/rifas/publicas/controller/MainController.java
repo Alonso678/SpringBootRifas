@@ -29,7 +29,9 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.Base64;
+import java.util.Map;
 
 @Controller
 public class MainController {
@@ -296,6 +298,7 @@ public class MainController {
         if (principal == null) {
             return "redirect:/login";
         }
+
         Usuario usuario = usuarioRepository.findByEmail(principal.getName()).orElseThrow();
         List<Compra> compras = compraRepository.findByUsuarioId(usuario.getId());
         List<Rifa> rifasActivas = rifaRepository.findByEstado("ACTIVA");
@@ -307,30 +310,73 @@ public class MainController {
                 .min(BigDecimal::compareTo)
                 .orElse(new BigDecimal("150"));
 
-        model.addAttribute("usuario", usuario);
-        model.addAttribute("compras", compras);
-        model.addAttribute("rifasActivas", rifasActivas);
-        model.addAttribute("precioMinimoBoleto", precioMinimoBoleto);
+        // Filtrar las compras pendientes directamente de la lista general ya cargada
+        List<Compra> comprasPendientes = compras.stream()
+                .filter(c -> c != null && "PENDIENTE".equals(c.getEstadoPago()))
+                .toList(); // O .collect(Collectors.toList()) dependiendo de tu versión de Java
 
-        BigDecimal totalPendiente = compras.stream()
-                .filter(c -> c != null && "PENDIENTE".equals(c.getEstadoPago()) && c.getMontoTotal() != null)
-                .map(c -> c.getMontoTotal())
-                .reduce(BigDecimal.ZERO, (acumulado, actual) -> acumulado.add(actual));
+        // --- NUEVO: Agrupar las compras pendientes por rifa ---
+        Map<Rifa, List<Compra>> pendientesPorRifa = comprasPendientes.stream()
+                .filter(c -> c.getRifa() != null)
+                .collect(Collectors.groupingBy(Compra::getRifa));
+
+        // Calcular el total pendiente de pago
+        BigDecimal totalPendiente = comprasPendientes.stream()
+                .filter(c -> c.getMontoTotal() != null)
+                .map(Compra::getMontoTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         boolean tienePendientes = totalPendiente.compareTo(BigDecimal.ZERO) > 0;
 
-        model.addAttribute("usuario", usuario); 
+        // --- LÍNEA OBLIGATORIA QUE FALTABA ---
+        model.addAttribute("pendientesPorRifa", pendientesPorRifa);
+        
+        // Agregar todos los atributos al modelo para que la vista los lea sin problemas
+        model.addAttribute("usuario", usuario);
         model.addAttribute("compras", compras);
+        model.addAttribute("comprasPendientes", comprasPendientes);
+        model.addAttribute("rifasActivas", rifasActivas);
+        model.addAttribute("precioMinimoBoleto", precioMinimoBoleto);
         model.addAttribute("totalPendiente", totalPendiente);
         model.addAttribute("tienePendientes", tienePendientes);
-        model.addAttribute("rifasActivas", rifaRepository.findByEstado("ACTIVA"));
 
         return "mis-compras";
     }
 
     @GetMapping("/admin/rifas")
-    public String adminRifas(Model model) {
-        model.addAttribute("rifas", rifaRepository.findAll());
+    public String adminRifas(Model model, Principal principal) {
+
+        if (principal == null) {
+            return "redirect:/login";
+        }
+
+        // Obtener el email del administrador logueado
+        String emailAdmin = principal.getName();
+
+        // Buscar todas las rifas para evaluar las vencidas, pero filtrando solo las del admin actual
+        List<Rifa> rifas = rifaRepository.findByAdministradorEmail(emailAdmin);
+
+        LocalDateTime ahora = LocalDateTime.now();
+        boolean huboCambios = false;
+
+        // Recorremos todas las rifas para detectar si alguna ACTIVA ya venció
+        for (Rifa rifa : rifas) {
+            if ("ACTIVA".equals(rifa.getEstado()) && rifa.getFechaSorteo() != null
+                    && rifa.getFechaSorteo().isBefore(ahora)) {
+                rifa.setEstado("VENCIDA");
+                rifaRepository.save(rifa);
+                huboCambios = true;
+            }
+        }
+
+        // Si hubo cambios, volvemos a consultar la lista actualizada de la BD
+        if (huboCambios) {
+            rifas = rifaRepository.findAll().stream()
+                    .filter(r -> r.getAdministrador() != null && r.getAdministrador().getEmail().equals(emailAdmin))
+                    .toList();
+        }
+
+        model.addAttribute("rifas", rifas);
         model.addAttribute("nuevaRifa", new Rifa());
         return "admin-rifas";
     }
@@ -339,8 +385,17 @@ public class MainController {
     @Transactional
     public String guardarRifa(@ModelAttribute("nuevaRifa") Rifa rifa,
             @RequestParam(value = "imagenFile", required = false) MultipartFile imagenFile,
+            Principal principal,
             RedirectAttributes redirectAttributes) {
 
+        // Buscamos al usuario administrador actual mediante su sesión
+        if (principal != null) {
+            Usuario adminLogueado = usuarioRepository.findByEmail(principal.getName()).orElse(null);
+            if (adminLogueado != null) {
+                rifa.setAdministrador(adminLogueado);
+            }
+        }
+        
         if (imagenFile != null && !imagenFile.isEmpty()) {
             try {
                 byte[] bytes = imagenFile.getBytes();
@@ -349,6 +404,16 @@ public class MainController {
                 log.info("Imagen de la rifa procesada y convertida a Base64 correctamente.");
             } catch (Exception e) {
                 log.error("Error al procesar la imagen de la rifa: {}", e.getMessage(), e);
+            }
+        }
+
+        // --- VALIDACIÓN AUTOMÁTICA DE ESTADO SEGÚN LA FECHA DE SORTEO ---
+        LocalDateTime ahora = LocalDateTime.now();
+        if (rifa.getFechaSorteo() != null) {
+            if (rifa.getFechaSorteo().isBefore(ahora)) {
+                rifa.setEstado("VENCIDA");
+            } else if (rifa.getEstado() == null || rifa.getEstado().isEmpty() || "VENCIDA".equals(rifa.getEstado())) {
+                rifa.setEstado("ACTIVA");
             }
         }
 
@@ -383,6 +448,11 @@ public class MainController {
             existente.setFechaSorteo(rifa.getFechaSorteo());
             existente.setCostoPremio(rifa.getCostoPremio());
 
+            // Actualizar también el administrador si se modificó
+            if (rifa.getAdministrador() != null) {
+                existente.setAdministrador(rifa.getAdministrador());
+            }
+            
             // Caso 1: Ampliar número de boletos mediante una sola inserción en lote
             // (generate_series)
             if (rifa.getTotalBoletos() > totalActualEnDb) {

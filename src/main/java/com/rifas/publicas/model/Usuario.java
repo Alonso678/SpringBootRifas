@@ -6,12 +6,16 @@ import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 @Entity
 @Table(name = "usuarios")
 @Data
+@EqualsAndHashCode(exclude = "datosBancarios")
+@ToString(exclude = "datosBancarios")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Usuario {
@@ -57,6 +61,9 @@ public class Usuario {
     private boolean reclamoBloqueado = false;
     private int boletosVendidosTrasBloqueo = 0;
 
+    @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL)
+    private DatosBancarios datosBancarios;
+
     // Getters y Setters
     public String getToken() {
         return token;
@@ -64,5 +71,14 @@ public class Usuario {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    // Agrega su getter y setter si lo requieres:
+    public DatosBancarios getDatosBancarios() {
+        return datosBancarios;
+    }
+
+    public void setDatosBancarios(DatosBancarios datosBancarios) {
+        this.datosBancarios = datosBancarios;
     }
 }

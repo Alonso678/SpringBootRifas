@@ -1,5 +1,7 @@
 package com.rifas.publicas.repository;
 import com.rifas.publicas.model.Compra;
+import com.rifas.publicas.model.Usuario;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,4 +20,7 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     @Modifying
     @Query("DELETE FROM Compra c WHERE c.rifa.id = :rifaId AND c.estadoPago = 'RECHAZADO'")
     void eliminarComprasRechazadasPorRifaId(@Param("rifaId") Long rifaId);
+
+    @Query("SELECT c FROM Compra c JOIN FETCH c.rifa r JOIN FETCH r.administrador WHERE c.usuario = :usuario AND c.estadoPago = :estadoPago")
+    List<Compra> findByUsuarioAndEstadoPago(@Param("usuario") Usuario usuario, @Param("estadoPago") String estadoPago);
 }

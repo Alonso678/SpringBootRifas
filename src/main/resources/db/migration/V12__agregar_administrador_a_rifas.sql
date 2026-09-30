@@ -7,4 +7,4 @@ UPDATE rifas SET administrador_id = 1 WHERE administrador_id IS NULL;
 -- 3. Crear la llave foránea que vincula la rifa con el usuario administrador de la tabla usuario
 ALTER TABLE rifas 
 ADD CONSTRAINT fk_rifa_administrador 
-FOREIGN KEY (administrador_id) REFERENCES usuario(id);
+FOREIGN KEY (administrador_id) REFERENCES usuarios(id);

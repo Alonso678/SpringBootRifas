@@ -44,7 +44,7 @@ public class Rifa {
     private String videoUrl;
 
     @Column(nullable = false, length = 20)
-    private String estado; // ACTIVA, FINALIZADA
+    private String estado; // ACTIVA, FINALIZADA,VENCIDA
 
     @Column(name = "costo_premio")
     private BigDecimal costoPremio;
@@ -58,6 +58,10 @@ public class Rifa {
 
     @Transient
     private Integer boletosDescartados;
+
+    @ManyToOne
+    @JoinColumn(name = "administrador_id")
+    private Usuario administrador;
 
     // --- Getters y Setters ---
 
@@ -163,5 +167,13 @@ public class Rifa {
 
     public void setBoletosDescartados(Integer boletosDescartados) {
         this.boletosDescartados = boletosDescartados;
+    }
+
+    public Usuario getAdministrador() {
+        return administrador;
+    }
+
+    public void setAdministrador(Usuario administrador) {
+        this.administrador = administrador;
     }
 }

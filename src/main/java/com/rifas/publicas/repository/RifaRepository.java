@@ -1,4 +1,5 @@
 package com.rifas.publicas.repository;
+
 import com.rifas.publicas.model.Rifa;
 
 import java.util.List;
@@ -9,4 +10,9 @@ public interface RifaRepository extends JpaRepository<Rifa, Long> {
     List<Rifa> findByEstado(String estado);
     // Filtra las rifas por múltiples estados
     List<Rifa> findByEstadoIn(List<String> estados);
+    
+    // Nuevo método para filtrar rifas activas de un administrador específico
+    List<Rifa> findByAdministradorIdAndEstado(Long administradorId, String estado);
+
+    List<Rifa> findByAdministradorEmail(String email);
 }
