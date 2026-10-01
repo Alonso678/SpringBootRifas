@@ -23,4 +23,7 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
 
     @Query("SELECT c FROM Compra c JOIN FETCH c.rifa r JOIN FETCH r.administrador WHERE c.usuario = :usuario AND c.estadoPago = :estadoPago")
     List<Compra> findByUsuarioAndEstadoPago(@Param("usuario") Usuario usuario, @Param("estadoPago") String estadoPago);
+
+    // Nuevo método para filtrar compras por el correo del administrador de la rifa asociada
+    List<Compra> findByRifaAdministradorEmail(String email);
 }

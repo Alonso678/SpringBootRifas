@@ -43,7 +43,7 @@
                 </a>
 
                 <!-- Alerta de Sorteo Vencido (Solo banner) -->
-                <div th:if="${metricas.estadoRifa == 'VENCIDA'}"
+                <div th:if="${metricas?.estadoRifa == 'VENCIDA'}"
                     class="alert alert-warning shadow-lg mb-4 d-flex align-items-center mt-3">
                     <div>
                         <i class="fa-solid fa-triangle-exclamation fs-4 me-2"></i>
@@ -58,7 +58,7 @@
         </div>
 
         <!-- Botón Flotante para Actualizar Fecha en la Esquina Inferior Derecha -->
-        <button th:if="${metricas.estadoRifa == 'VENCIDA' and rifaSeleccionadaId != null}" 
+        <button th:if="${metricas?.estadoRifa == 'VENCIDA' and rifaSeleccionadaId != null}" 
             class="position-fixed bottom-0 end-0 m-4 btn btn-warning btn-lg fw-bold shadow-lg rounded-pill px-4 py-3 border border-dark"
             style="z-index: 1050;"
             data-bs-toggle="modal"

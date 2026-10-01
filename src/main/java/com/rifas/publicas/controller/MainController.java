@@ -330,7 +330,7 @@ public class MainController {
 
         // --- LÍNEA OBLIGATORIA QUE FALTABA ---
         model.addAttribute("pendientesPorRifa", pendientesPorRifa);
-        
+
         // Agregar todos los atributos al modelo para que la vista los lea sin problemas
         model.addAttribute("usuario", usuario);
         model.addAttribute("compras", compras);
@@ -353,7 +353,8 @@ public class MainController {
         // Obtener el email del administrador logueado
         String emailAdmin = principal.getName();
 
-        // Buscar todas las rifas para evaluar las vencidas, pero filtrando solo las del admin actual
+        // Buscar todas las rifas para evaluar las vencidas, pero filtrando solo las del
+        // admin actual
         List<Rifa> rifas = rifaRepository.findByAdministradorEmail(emailAdmin);
 
         LocalDateTime ahora = LocalDateTime.now();
@@ -395,7 +396,7 @@ public class MainController {
                 rifa.setAdministrador(adminLogueado);
             }
         }
-        
+
         if (imagenFile != null && !imagenFile.isEmpty()) {
             try {
                 byte[] bytes = imagenFile.getBytes();
@@ -452,7 +453,7 @@ public class MainController {
             if (rifa.getAdministrador() != null) {
                 existente.setAdministrador(rifa.getAdministrador());
             }
-            
+
             // Caso 1: Ampliar número de boletos mediante una sola inserción en lote
             // (generate_series)
             if (rifa.getTotalBoletos() > totalActualEnDb) {
@@ -543,10 +544,39 @@ public class MainController {
             @RequestParam(value = "rifaFiltro", required = false) String rifaFiltro,
             @RequestParam(value = "estatusFiltros", required = false) List<String> estatusFiltros,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
+            Principal principal,
             Model model) {
 
         int currentPage = (page != null) ? page : 0;
-        List<Compra> compras = compraRepository.findAll();
+        if (principal == null) {
+            return "redirect:/login";
+        }
+
+        String emailAdmin = principal.getName();
+        
+        // 1. Obtenemos únicamente las rifas ACTIVAS de este administrador
+        List<Rifa> misRifas = rifaRepository.findByAdministradorEmail(emailAdmin).stream()
+                .filter(r -> r.getEstado() != null && r.getEstado().equalsIgnoreCase("ACTIVA"))
+                .toList();
+        
+        model.addAttribute("rifasAdmin", misRifas);
+
+        // 2. Si no viene una rifa seleccionada en la URL y existen rifas activas, seleccionamos la primera por defecto
+        if ((rifaFiltro == null || rifaFiltro.trim().isEmpty()) && !misRifas.isEmpty()) {
+            rifaFiltro = String.valueOf(misRifas.get(0).getId());
+        }
+
+        // 3. Obtenemos las compras filtradas por las rifas de este administrador
+        List<Compra> compras = compraRepository.findByRifaAdministradorEmail(emailAdmin);
+
+        // Si hay una rifa seleccionada (o la primera por defecto), filtramos las compras correspondientes
+        if (rifaFiltro != null && !rifaFiltro.trim().isEmpty()) {
+            String rf = rifaFiltro.trim().toLowerCase();
+            compras = compras.stream()
+                    .filter(c -> c.getRifa() != null && (String.valueOf(c.getRifa().getId()).contains(rf) ||
+                            (c.getRifa().getTitulo() != null && c.getRifa().getTitulo().toLowerCase().contains(rf))))
+                    .toList();
+        }
 
         // 1. Filtrar por texto general
         if (filtro != null && !filtro.trim().isEmpty()) {
@@ -608,8 +638,21 @@ public class MainController {
     }
 
     @PostMapping("/admin/compras/validar/{id}")
-    public String validarPago(@PathVariable("id") @NonNull Long compraId, @RequestParam("estado") String estado) {
+    public String validarPago(@PathVariable("id") @NonNull Long compraId, @RequestParam("estado") String estado,
+            Principal principal, RedirectAttributes redirectAttributes) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
+
         Compra compra = compraRepository.findById(compraId).orElseThrow();
+
+        // Validar que la compra pertenezca a una rifa administrada por el usuario
+        // actual
+        if (compra.getRifa() == null || compra.getRifa().getAdministrador() == null ||
+                !compra.getRifa().getAdministrador().getEmail().equals(principal.getName())) {
+            redirectAttributes.addFlashAttribute("mensajeError", "No tienes permisos para gestionar esta compra.");
+            return "redirect:/admin/compras";
+        }
 
         if ("PAGADO".equals(estado) && !"PAGADO".equals(compra.getEstadoPago())) {
             Usuario comprador = compra.getUsuario();
@@ -655,7 +698,7 @@ public class MainController {
                     digital.setBoleto(b);
                     digital.setFechaEmision(LocalDateTime.now());
                     digital.setRandomState(randomState); // <--- Agrega esto
-                    digital.setSelloDigital(sello); 
+                    digital.setSelloDigital(sello);
                     boletoDigitalRepository.save(digital);
                 }
                 // ------------------------------------------------
@@ -772,11 +815,11 @@ public class MainController {
         if (!boletoDigitalRepository.existsByBoletoId(boleto.getId())) {
             BoletoDigital digital = new BoletoDigital();
             String randomState = cryptoService.generarRandomState();
-                String sello = cryptoService.generarSelloDigital(
-                        boleto.getId(),
-                        String.valueOf(boleto.getNumeroBoleto()),
-                        boleto.getUsuario().getEmail(),
-                        randomState);
+            String sello = cryptoService.generarSelloDigital(
+                    boleto.getId(),
+                    String.valueOf(boleto.getNumeroBoleto()),
+                    boleto.getUsuario().getEmail(),
+                    randomState);
             digital.setBoleto(boleto);
             digital.setFechaEmision(LocalDateTime.now());
             digital.setRandomState(randomState);

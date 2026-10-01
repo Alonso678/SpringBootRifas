@@ -15,4 +15,6 @@ public interface RifaRepository extends JpaRepository<Rifa, Long> {
     List<Rifa> findByAdministradorIdAndEstado(Long administradorId, String estado);
 
     List<Rifa> findByAdministradorEmail(String email);
+
+    List<Rifa> findByAdministradorEmailAndEstado(String emailAdmin, String estado);
 }

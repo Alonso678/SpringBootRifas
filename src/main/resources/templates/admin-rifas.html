@@ -83,7 +83,9 @@
                             class="fa-solid fa-gauge-high me-1"></i>Panel
                         Admin</a>
 
-                    <a href="/" class="btn btn-outline-light btn-sm">🏠 Volver al Inicio</a>
+                    <a href="/" class="btn btn-outline-light">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Volver al Inicio
+                    </a>
                     <form th:action="@{/logout}" method="post" class="d-inline mb-0"
                         th:if="${#authorization.expression('isAuthenticated()')}">
                         <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">Salir</button>
