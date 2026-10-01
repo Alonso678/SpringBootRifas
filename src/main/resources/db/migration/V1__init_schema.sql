@@ -56,5 +56,5 @@ CREATE TABLE IF NOT EXISTS compra_boletos (
 -- Insertar un usuario Administrador por admin123defecto (Contraseña: admin123 codificada en BCrypt)
 -- Email: admin@rifas.com / Password: 
 INSERT INTO usuarios (email, password, nombre, telefono, rol)
-VALUES ('admin@rifas.com', '$2a$10$pz9R/5hvIBCg3f6FNlu/3eZTDkV6Tyd7MzM1i/neNpWVoa6P430CO', 'Administrador General', '5555555555', 'ROLE_ADMIN')
+VALUES ('admin@rifas.com', '$2a$10$04DBk02/3MFTAg4BJkDN2e3Zq.GhBpFNU/pdplEE/mj//NCP3P8cG', 'Administrador General', '7713318966', 'ROLE_ADMIN')
 ON CONFLICT (email) DO NOTHING;
