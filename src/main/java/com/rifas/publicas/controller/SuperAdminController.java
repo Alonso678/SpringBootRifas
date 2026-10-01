@@ -37,35 +37,50 @@ public class SuperAdminController {
         return "super-admin-analisis"; // Nombre del archivo HTML que crearemos en la Fase 4
     }
 
-    // 2. Lista de Usuarios
+    // 2. Lista de Usuarios (Actualizado con soporte para listar todos y filtros avanzados por rol)
     @GetMapping("/usuarios")
-    public String listarUsuarios(@RequestParam(value = "buscar", required = false) String buscar, Model model) {
+    public String listarUsuarios(
+            @RequestParam(value = "buscar", required = false) String buscar,
+            @RequestParam(value = "listar", required = false) String listar,
+            @RequestParam(value = "rolFiltro", required = false) String rolFiltro,
+            Model model) {
+
         List<Usuario> usuarios;
 
-        if (buscar != null && !buscar.trim().isEmpty()) {
+        if ("todos".equals(listar)) {
+            // Opción para traer a todos ordenados del más reciente al más antiguo
+            usuarios = usuarioService.listarTodosOrdenadosPorRecientes(); 
+            model.addAttribute("terminoBusqueda", "Todos los usuarios");
+        } else if (buscar != null && !buscar.trim().isEmpty()) {
             // Llama al repositorio usando el término ingresado
             usuarios = usuarioService.buscarUsuarios(buscar);
-            // Nota: Asegúrate de que buscarUsuarios() en UsuarioService llame a
-            // findByEmailContainingIgnoreCase()
+            model.addAttribute("terminoBusqueda", buscar);
+        } else if (rolFiltro != null && !rolFiltro.trim().isEmpty()) {
+            // Filtro avanzado por rol específico (ej. administradores o usuarios normales)
+            usuarios = usuarioService.buscarPorRol(rolFiltro);
+            model.addAttribute("terminoBusqueda", "Rol: " + rolFiltro);
         } else {
             // Si entras por primera vez o limpias, no carga nada
             usuarios = java.util.Collections.emptyList();
+            model.addAttribute("terminoBusqueda", null);
         }
 
         model.addAttribute("usuarios", usuarios);
-        model.addAttribute("terminoBusqueda", buscar);
+        model.addAttribute("rolFiltro", rolFiltro);
 
         return "super-admin-usuarios";
     }
 
     // 3. Modificar el Rol de un Usuario
     @PostMapping("/usuarios/{id}/cambiar-rol")
-    public String cambiarRol(@PathVariable Long id, @RequestParam String nuevoRol, RedirectAttributes redirectAttributes) {
+    public String cambiarRol(@PathVariable Long id, @RequestParam String nuevoRol,
+            RedirectAttributes redirectAttributes) {
         try {
             usuarioService.cambiarRolUsuario(id, nuevoRol);
             redirectAttributes.addFlashAttribute("mensajeExito", "Rol actualizado correctamente.");
         } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("mensajeError", e.getMessage()); // Captura el error de proteger al ID 1
+            redirectAttributes.addFlashAttribute("mensajeError", e.getMessage()); // Captura el error de proteger al ID
+                                                                                  // 1
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("mensajeError", "Ocurrió un error al actualizar el rol.");
         }

@@ -110,6 +110,16 @@
             background: rgba(226, 232, 240, 0.9) !important;
             color: #475569 !important;
         }
+
+        /* Estilo interactivo para el botón del candado */
+        .toggle-password {
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .toggle-password:hover {
+            color: #f59e0b !important;
+        }
     </style>
 </head>
 
@@ -143,7 +153,10 @@
                 <div class="mb-4">
                     <label class="form-label fw-semibold small text-muted">Contraseña</label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                        <!-- Candado interactivo con el evento onclick -->
+                        <span class="input-group-text toggle-password" id="togglePasswordBtn" onclick="togglePasswordVisibility()" title="Mostrar/Ocultar contraseña">
+                            <i class="fa-solid fa-lock" id="lockIcon"></i>
+                        </span>
                         <input type="password" id="password" name="password" class="form-control" placeholder="••••••••">
                     </div>
                 </div>
@@ -170,6 +183,22 @@
     <!-- Script de SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Función para alternar la visibilidad de la contraseña al hacer clic en el candado
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const lockIcon = document.getElementById('lockIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                lockIcon.classList.remove('fa-lock');
+                lockIcon.classList.add('fa-lock-open'); // Cambia a candado abierto
+            } else {
+                passwordInput.type = 'password';
+                lockIcon.classList.remove('fa-lock-open');
+                lockIcon.classList.add('fa-lock'); // Regresa a candado cerrado
+            }
+        }
+
         document.querySelector('form').addEventListener('submit', function (event) {
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
@@ -180,7 +209,7 @@
                 mensaje = 'Por favor, ingresa tu correo electrónico.';
             } else if (!username.includes('@') || !username.includes('.')) {
                 mensaje = 'El correo electrónico no es válido.';
-            }else if (!password) {
+            } else if (!password) {
                 mensaje = 'Por favor, ingresa tu contraseña.';
             }
 

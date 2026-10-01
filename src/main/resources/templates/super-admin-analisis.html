@@ -5,43 +5,73 @@
     <meta charset="UTF-8">
     <title>Panel Global - Super Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .backdrop-blur {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .stat-card, .rifa-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .stat-card:hover, .rifa-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3) !important;
+        }
+    </style>
 </head>
 
-<body class="bg-black bg-opacity-75 text-light min-vh-100">
+<body class="bg-black bg-opacity-75 text-light min-vh-100 d-flex flex-column">
 
-    <!-- Barra de navegación superior -->
-    <nav class="navbar navbar-dark bg-dark bg-opacity-75 border-bottom border-secondary shadow-sm mb-4">
-        <div class="container">
-            <span class="navbar-brand fw-bold text-light">Panel Global de Estadísticas</span>
-            <a href="/" class="btn btn-outline-light btn-sm">🏠 Volver al Inicio</a>
+    <!-- Barra de navegación superior profesional -->
+    <nav class="navbar navbar-dark bg-dark bg-opacity-75 border-bottom border-secondary shadow-sm mb-4 backdrop-blur sticky-top">
+        <div class="container py-2">
+            <span class="navbar-brand fw-bold text-light d-flex align-items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-warning"></i> Panel Global de Estadísticas
+            </span>
+            <a href="/" class="btn btn-outline-light btn-sm rounded-pill px-3 shadow-sm">
+                <i class="fa-solid fa-house me-1"></i> Volver al Inicio
+            </a>
         </div>
     </nav>
 
     <!-- Contenedor centralizado tipo tablet -->
-    <div class="container my-4">
+    <div class="container my-4 flex-grow-1">
         <div class="row justify-content-center">
             <div class="col-12 col-md-11 col-lg-10">
-                <div class="card bg-dark bg-opacity-50 text-light shadow-lg border border-secondary p-4 rounded-4">
+                <div class="card bg-dark bg-opacity-50 text-light shadow-lg border border-secondary p-4 p-md-5 rounded-4 backdrop-blur">
 
-                    <h2 class="mb-4 text-center text-md-start fw-bold text-white">Administración de Estadísticas</h2>
+                    <!-- Encabezado de sección -->
+                    <div class="mb-4 pb-3 border-bottom border-secondary">
+                        <h2 class="fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-sliders text-info"></i> Administración de Estadísticas
+                        </h2>
+                        <p class="text-secondary mb-0 small">Monitoreo de rendimiento general, métricas de rifas y control global de comisiones.</p>
+                    </div>
 
                     <!-- Pestañas de Navegación (Tabs) -->
                     <ul class="nav nav-pills mb-4 gap-2 border-bottom border-secondary pb-3" id="adminTabs"
                         role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active bg-secondary text-white fw-bold" id="general-tab"
-                                data-bs-toggle="tab" data-bs-target="#general-pane" type="button" role="tab">📊
-                                Rendimiento General</button>
+                            <button class="nav-link active bg-secondary text-white fw-bold rounded-pill px-3 py-2 shadow-sm" id="general-tab"
+                                data-bs-toggle="tab" data-bs-target="#general-pane" type="button" role="tab">
+                                <i class="fa-solid fa-chart-column me-1"></i> Rendimiento General
+                            </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link text-light bg-black bg-opacity-25 fw-bold border border-secondary"
+                            <button class="nav-link text-light bg-black bg-opacity-25 fw-bold border border-secondary rounded-pill px-3 py-2"
                                 id="rifas-tab" data-bs-toggle="tab" data-bs-target="#rifas-pane" type="button"
-                                role="tab">🎟️ Rifas Individuales</button>
+                                role="tab">
+                                <i class="fa-solid fa-ticket me-1"></i> Rifas Individuales
+                            </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link text-light bg-black bg-opacity-25 fw-bold border border-secondary"
+                            <button class="nav-link text-light bg-black bg-opacity-25 fw-bold border border-secondary rounded-pill px-3 py-2"
                                 id="comisiones-tab" data-bs-toggle="tab" data-bs-target="#comisiones-pane" type="button"
-                                role="tab">💳 Comisiones</button>
+                                role="tab">
+                                <i class="fa-solid fa-wallet me-1"></i> Comisiones
+                            </button>
                         </li>
                     </ul>
 
@@ -53,16 +83,16 @@
                             <div class="row g-4">
                                 <div class="col-md-12">
                                     <div
-                                        class="card text-light bg-black bg-opacity-50 mb-2 shadow-sm border border-secondary">
+                                        class="stat-card card text-light bg-black bg-opacity-50 mb-2 shadow-sm border border-secondary rounded-4 p-2">
                                         <div
-                                            class="card-header bg-black bg-opacity-25 fw-bold text-secondary border-bottom border-secondary">
-                                            Volumen de Rifas</div>
+                                            class="card-header bg-black bg-opacity-25 fw-bold text-secondary border-bottom border-secondary rounded-top-3 px-3 py-2">
+                                            <i class="fa-solid fa-layer-group me-1"></i> Volumen de Rifas</div>
                                         <div class="card-body">
                                             <h1 class="display-6 fw-bold mb-2 text-white"
                                                 th:text="${estadisticas.totalRifas}">0</h1>
-                                            <p class="card-text mb-0">
+                                            <p class="card-text mb-0 small">
                                                 <span class="text-success fw-bold">● Activas:</span> <span
-                                                    th:text="${estadisticas.rifasActivas}">0</span> |
+                                                    th:text="${estadisticas.rifasActivas}">0</span> <span class="text-secondary mx-2">|</span>
                                                 <span class="text-danger fw-bold">● Vencidas:</span> <span
                                                     th:text="${estadisticas.rifasVencidas}">0</span>
                                             </p>
@@ -72,10 +102,10 @@
 
                                 <div class="col-md-6">
                                     <div
-                                        class="card text-light bg-black bg-opacity-50 mb-2 shadow-sm h-100 border border-secondary">
+                                        class="stat-card card text-light bg-black bg-opacity-50 mb-2 shadow-sm h-100 border border-secondary rounded-4 p-2">
                                         <div
-                                            class="card-header bg-black bg-opacity-25 fw-bold text-secondary border-bottom border-secondary">
-                                            Impacto Financiero</div>
+                                            class="card-header bg-black bg-opacity-25 fw-bold text-secondary border-bottom border-secondary rounded-top-3 px-3 py-2">
+                                            <i class="fa-solid fa-chart-line me-1"></i> Impacto Financiero</div>
                                         <div class="card-body">
                                             <p class="mb-1 text-secondary small">Ingresos Brutos Globales:</p>
                                             <h5 class="fw-bold mb-3 text-success">$<span
@@ -83,7 +113,7 @@
                                             </h5>
 
                                             <p class="mb-1 text-secondary small">Utilidad Neta Global:</p>
-                                            <h5 class="fw-bold text-warning">$<span
+                                            <h5 class="fw-bold text-warning mb-0">$<span
                                                     th:text="${#numbers.formatDecimal(estadisticas.utilidadTotalPlataforma, 1, 'COMMA', 2, 'POINT')}">0.00</span>
                                             </h5>
                                         </div>
@@ -92,15 +122,14 @@
 
                                 <div class="col-md-6">
                                     <div
-                                        class="card text-light bg-black bg-opacity-50 mb-2 shadow-sm h-100 border border-secondary">
+                                        class="stat-card card text-light bg-black bg-opacity-50 mb-2 shadow-sm h-100 border border-secondary rounded-4 p-2">
                                         <div
-                                            class="card-header bg-black bg-opacity-25 fw-bold text-secondary border-bottom border-secondary">
-                                            Boletos Vendidos</div>
+                                            class="card-header bg-black bg-opacity-25 fw-bold text-secondary border-bottom border-secondary rounded-top-3 px-3 py-2">
+                                            <i class="fa-solid fa-ticket-simple me-1"></i> Boletos Vendidos</div>
                                         <div class="card-body text-center d-flex flex-column justify-content-center">
                                             <h2 class="display-5 fw-bold mb-0 text-info"
                                                 th:text="${estadisticas.boletosVendidosTotales}">0</h2>
-                                            <p class="card-text small text-secondary mt-2">Comprados en toda la
-                                                plataforma.</p>
+                                            <p class="card-text small text-secondary mt-2 mb-0">Comprados en toda la plataforma.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -110,12 +139,15 @@
                         <!-- PESTAÑA 2: Detalle por Rifa -->
                         <div class="tab-pane fade" id="rifas-pane" role="tabpanel">
                             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-                                <h5 class="text-secondary mb-0">Listado completo e independiente de rifas</h5>
+                                <h5 class="text-secondary mb-0 fw-semibold fs-6">Listado completo e independiente de rifas</h5>
                                 
                                 <!-- Controles de Buscador y Filtro -->
                                 <div class="d-flex flex-column flex-sm-row gap-2">
-                                    <input type="text" id="inputBuscarRifa" class="form-control form-control-sm bg-black text-light border-secondary" placeholder="🔍 Buscar por título o ID...">
-                                    <select id="selectFiltroEstado" class="form-select form-select-sm bg-black text-light border-secondary">
+                                    <div class="input-group input-group-sm shadow-sm">
+                                        <span class="input-group-text bg-dark text-secondary border-secondary"><i class="fa-solid fa-magnifying-glass"></i></span>
+                                        <input type="text" id="inputBuscarRifa" class="form-control bg-black text-light border-secondary" placeholder="Buscar por título o ID...">
+                                    </div>
+                                    <select id="selectFiltroEstado" class="form-select form-select-sm bg-black text-light border-secondary shadow-sm">
                                         <option value="">Todos los estatus</option>
                                         <option value="ACTIVA">ACTIVA</option>
                                         <option value="VENCIDA">VENCIDA</option>
@@ -125,12 +157,12 @@
                             </div>
 
                             <!-- Alerta de Suma General Pendiente -->
-                            <div class="alert alert-warning bg-black bg-opacity-50 border border-warning text-light d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 p-3 rounded-3">
-                                <div>
+                            <div class="alert alert-warning bg-black bg-opacity-50 border border-warning text-light d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 p-3 rounded-4 shadow-sm">
+                                <div class="mb-2 mb-sm-0">
                                     <span class="small text-secondary d-block">Comisiones Pendientes de Cobro (10% Rifas Finalizadas):</span>
                                     <h3 class="fw-bold text-warning mb-0" id="labelSumaPendiente">$0.00</h3>
                                 </div>
-                                <span class="badge bg-warning text-dark mt-2 mt-sm-0 align-self-start align-self-sm-center">Suma Global Activa</span>
+                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">Suma Global Activa</span>
                             </div>
 
                             <!-- Contenedor de las Tarjetas -->
@@ -141,13 +173,13 @@
                                      th:data-id="${rifa.idRifa}"
                                      th:data-estado="${rifa.estadoRifa}"
                                      th:data-utilidad="${rifa.utilidadNeta}">
-                                    <div class="card bg-black bg-opacity-50 text-light border border-secondary p-3 rounded-3">
+                                    <div class="rifa-card card bg-black bg-opacity-50 text-light border border-secondary p-3 p-md-4 rounded-4 shadow-sm">
                                         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                                             <div>
-                                                <div class="d-flex align-items-center gap-2 mb-1">
-                                                    <span class="badge bg-secondary">ID: <span th:text="${rifa.idRifa}"></span></span>
-                                                    <span class="badge"
-                                                        th:classappend="${rifa.estadoRifa == 'ACTIVA' ? 'bg-success' : (rifa.estadoRifa == 'VENCIDA' ? 'bg-danger' : 'bg-warning text-dark')}"
+                                                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                                    <span class="badge bg-secondary font-monospace px-2 py-1">ID: <span th:text="${rifa.idRifa}"></span></span>
+                                                    <span class="badge px-2 py-1"
+                                                        th:classappend="${rifa.estadoRifa == 'ACTIVA' ? 'bg-success text-white' : (rifa.estadoRifa == 'VENCIDA' ? 'bg-danger text-white' : 'bg-warning text-dark')}"
                                                         th:text="${rifa.estadoRifa}"></span>
                                                 </div>
                                                 <h5 class="text-white fw-bold mb-1" th:text="${rifa.tituloRifa}"></h5>
@@ -157,20 +189,20 @@
                                                 </p>
                                             </div>
 
-                                            <div class="text-md-end border-top border-secondary pt-2 pt-md-0">
+                                            <div class="text-md-end border-top border-secondary pt-2 pt-md-0 d-flex flex-md-column justify-content-between">
                                                 <div class="small text-secondary">Ingresos: <span class="text-success fw-bold">$<span th:text="${#numbers.formatDecimal(rifa.ingresosTotales, 1, 'COMMA', 2, 'POINT')}"></span></span></div>
                                                 <div class="small text-secondary">Utilidad Neta: <span class="text-warning fw-bold">$<span th:text="${#numbers.formatDecimal(rifa.utilidadNeta, 1, 'COMMA', 2, 'POINT')}"></span></span></div>
                                             </div>
                                         </div>
 
                                         <!-- Sección exclusiva para rifas FINALIZADAS (Cálculo del 10% y Switch) -->
-                                        <div th:if="${rifa.estadoRifa == 'FINALIZADA'}" class="mt-3 pt-2 border-top border-secondary d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 seccion-finalizada">
+                                        <div th:if="${rifa.estadoRifa == 'FINALIZADA'}" class="mt-3 pt-3 border-top border-secondary d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 seccion-finalizada">
                                             <div>
-                                                <span class="small text-info fw-bold">💡 Comisión Sugerida (10%): </span>
+                                                <span class="small text-info fw-bold"><i class="fa-solid fa-lightbulb me-1"></i> Comisión Sugerida (10%): </span>
                                                 <span class="text-info fw-bold">$<span class="monto-comision" th:text="${#numbers.formatDecimal(rifa.utilidadNeta * 0.10, 1, 'COMMA', 2, 'POINT')}"></span></span>
                                             </div>
-                                            <div class="form-check form-switch ps-0 d-flex align-items-center gap-2">
-                                                <label class="form-check-label small text-secondary mb-0" th:for="${'switchCobro-' + rifa.idRifa}">¿Cobrado?</label>
+                                            <div class="form-check form-switch ps-0 d-flex align-items-center gap-2 bg-dark bg-opacity-50 px-3 py-1 rounded-pill border border-secondary">
+                                                <label class="form-check-label small text-secondary mb-0 fw-medium" th:for="${'switchCobro-' + rifa.idRifa}">¿Cobrado?</label>
                                                 <input class="form-check-input switch-cobro m-0" type="checkbox" role="switch" th:id="${'switchCobro-' + rifa.idRifa}" style="float: none;">
                                             </div>
                                         </div>
@@ -181,11 +213,11 @@
 
                         <!-- PESTAÑA 3: Resumen de Comisiones -->
                         <div class="tab-pane fade" id="comisiones-pane" role="tabpanel">
-                            <h5 class="text-secondary mb-3">Resumen General de Ingresos por Comisiones (10%)</h5>
+                            <h5 class="text-secondary mb-3 fw-semibold fs-6">Resumen General de Ingresos por Comisiones (10%)</h5>
                             
                             <div class="row g-4 mb-4">
                                 <div class="col-md-6">
-                                    <div class="card bg-black bg-opacity-50 text-light border border-secondary p-3 h-100">
+                                    <div class="stat-card card bg-black bg-opacity-50 text-light border border-secondary p-3 h-100 rounded-4 shadow-sm">
                                         <div class="card-body text-center d-flex flex-column justify-content-center">
                                             <p class="text-secondary small mb-1">Total Cobrado a Administradores</p>
                                             <h2 class="fw-bold text-success mb-0" id="resumenTotalCobrado">$0.00</h2>
@@ -194,7 +226,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="card bg-black bg-opacity-50 text-light border border-secondary p-3 h-100">
+                                    <div class="stat-card card bg-black bg-opacity-50 text-light border border-secondary p-3 h-100 rounded-4 shadow-sm">
                                         <div class="card-body text-center d-flex flex-column justify-content-center">
                                             <p class="text-secondary small mb-1">Total Pendiente por Cobrar</p>
                                             <h2 class="fw-bold text-warning mb-0" id="resumenTotalPendiente">$0.00</h2>
@@ -212,6 +244,7 @@
         </div>
     </div>
 
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Script de Filtrado, Búsqueda y Cálculo de Comisiones -->

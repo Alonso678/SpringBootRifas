@@ -9,4 +9,5 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByToken(String token);
     Optional<Usuario> findByCodigoReferido(String codigoRef);
     List<Usuario> findByEmailContainingIgnoreCase(String email);
+    List<Usuario> findByRol(String rol);
 }
