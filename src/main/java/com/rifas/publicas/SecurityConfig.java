@@ -22,6 +22,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/registro", "/terminos-y-condiciones", "/aviso-de-privacidad", "/login","/reset-password", "/recuperar-password","/api/sugerencias/**", "/rifas/**", "/css/**", "/js/**", "/assets/**", "/boleto/digital/**")
                         .permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/super-admin/**").hasRole("SUPER_ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                 .loginPage("/login")

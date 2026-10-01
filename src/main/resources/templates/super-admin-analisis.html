@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Global - Super Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-black bg-opacity-75 text-light min-vh-100">
+
+    <!-- Barra de navegación superior -->
+    <nav class="navbar navbar-dark bg-dark bg-opacity-75 border-bottom border-secondary shadow-sm mb-4">
+        <div class="container">
+            <span class="navbar-brand fw-bold text-light">Panel Global de Estadísticas</span>
+            <a href="/" class="btn btn-outline-light btn-sm">🏠 Volver al Inicio</a>
+        </div>
+    </nav>
+
+    <!-- Contenedor centralizado tipo tablet -->
+    <div class="container my-4">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-11 col-lg-10">
+                <div class="card bg-dark bg-opacity-50 text-light shadow-lg border border-secondary p-4 rounded-4">
+
+                    <h2 class="mb-4 text-center text-md-start fw-bold text-white">Administración de Estadísticas</h2>
+
+                    <!-- Pestañas de Navegación (Tabs) -->
+                    <ul class="nav nav-pills mb-4 gap-2 border-bottom border-secondary pb-3" id="adminTabs"
+                        role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active bg-secondary text-white fw-bold" id="general-tab"
+                                data-bs-toggle="tab" data-bs-target="#general-pane" type="button" role="tab">📊
+                                Rendimiento General</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-light bg-black bg-opacity-25 fw-bold border border-secondary"
+                                id="rifas-tab" data-bs-toggle="tab" data-bs-target="#rifas-pane" type="button"
+                                role="tab">🎟️ Rifas Individuales</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-light bg-black bg-opacity-25 fw-bold border border-secondary"
+                                id="comisiones-tab" data-bs-toggle="tab" data-bs-target="#comisiones-pane" type="button"
+                                role="tab">💳 Comisiones</button>
+                        </li>
+                    </ul>
+
+                    <!-- Contenido de las Pestañas -->
+                    <div class="tab-content" id="adminTabsContent">
+
+                        <!-- PESTAÑA 1: General -->
+                        <div class="tab-pane fade show active" id="general-pane" role="tabpanel">
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div
+                                        class="card text-light bg-black bg-opacity-50 mb-2 shadow-sm border border-secondary">
+                                        <div
+                                            class="card-header bg-black bg-opacity-25 fw-bold text-secondary border-bottom border-secondary">
+                                            Volumen de Rifas</div>
+                                        <div class="card-body">
+                                            <h1 class="display-6 fw-bold mb-2 text-white"
+                                                th:text="${estadisticas.totalRifas}">0</h1>
+                                            <p class="card-text mb-0">
+                                                <span class="text-success fw-bold">● Activas:</span> <span
+                                                    th:text="${estadisticas.rifasActivas}">0</span> |
+                                                <span class="text-danger fw-bold">● Vencidas:</span> <span
+                                                    th:text="${estadisticas.rifasVencidas}">0</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div
+                                        class="card text-light bg-black bg-opacity-50 mb-2 shadow-sm h-100 border border-secondary">
+                                        <div
+                                            class="card-header bg-black bg-opacity-25 fw-bold text-secondary border-bottom border-secondary">
+                                            Impacto Financiero</div>
+                                        <div class="card-body">
+                                            <p class="mb-1 text-secondary small">Ingresos Brutos Globales:</p>
+                                            <h5 class="fw-bold mb-3 text-success">$<span
+                                                    th:text="${#numbers.formatDecimal(estadisticas.ingresosTotalesPlataforma, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                            </h5>
+
+                                            <p class="mb-1 text-secondary small">Utilidad Neta Global:</p>
+                                            <h5 class="fw-bold text-warning">$<span
+                                                    th:text="${#numbers.formatDecimal(estadisticas.utilidadTotalPlataforma, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                            </h5>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div
+                                        class="card text-light bg-black bg-opacity-50 mb-2 shadow-sm h-100 border border-secondary">
+                                        <div
+                                            class="card-header bg-black bg-opacity-25 fw-bold text-secondary border-bottom border-secondary">
+                                            Boletos Vendidos</div>
+                                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                                            <h2 class="display-5 fw-bold mb-0 text-info"
+                                                th:text="${estadisticas.boletosVendidosTotales}">0</h2>
+                                            <p class="card-text small text-secondary mt-2">Comprados en toda la
+                                                plataforma.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PESTAÑA 2: Detalle por Rifa -->
+                        <div class="tab-pane fade" id="rifas-pane" role="tabpanel">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+                                <h5 class="text-secondary mb-0">Listado completo e independiente de rifas</h5>
+                                
+                                <!-- Controles de Buscador y Filtro -->
+                                <div class="d-flex flex-column flex-sm-row gap-2">
+                                    <input type="text" id="inputBuscarRifa" class="form-control form-control-sm bg-black text-light border-secondary" placeholder="🔍 Buscar por título o ID...">
+                                    <select id="selectFiltroEstado" class="form-select form-select-sm bg-black text-light border-secondary">
+                                        <option value="">Todos los estatus</option>
+                                        <option value="ACTIVA">ACTIVA</option>
+                                        <option value="VENCIDA">VENCIDA</option>
+                                        <option value="FINALIZADA">FINALIZADA</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Alerta de Suma General Pendiente -->
+                            <div class="alert alert-warning bg-black bg-opacity-50 border border-warning text-light d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 p-3 rounded-3">
+                                <div>
+                                    <span class="small text-secondary d-block">Comisiones Pendientes de Cobro (10% Rifas Finalizadas):</span>
+                                    <h3 class="fw-bold text-warning mb-0" id="labelSumaPendiente">$0.00</h3>
+                                </div>
+                                <span class="badge bg-warning text-dark mt-2 mt-sm-0 align-self-start align-self-sm-center">Suma Global Activa</span>
+                            </div>
+
+                            <!-- Contenedor de las Tarjetas -->
+                            <div class="row row-cols-1 g-3" id="contenedorRifas">
+                                <div class="col item-rifa" 
+                                     th:each="rifa : ${detallesRifas}"
+                                     th:data-titulo="${#strings.toLowerCase(rifa.tituloRifa)}"
+                                     th:data-id="${rifa.idRifa}"
+                                     th:data-estado="${rifa.estadoRifa}"
+                                     th:data-utilidad="${rifa.utilidadNeta}">
+                                    <div class="card bg-black bg-opacity-50 text-light border border-secondary p-3 rounded-3">
+                                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                                            <div>
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <span class="badge bg-secondary">ID: <span th:text="${rifa.idRifa}"></span></span>
+                                                    <span class="badge"
+                                                        th:classappend="${rifa.estadoRifa == 'ACTIVA' ? 'bg-success' : (rifa.estadoRifa == 'VENCIDA' ? 'bg-danger' : 'bg-warning text-dark')}"
+                                                        th:text="${rifa.estadoRifa}"></span>
+                                                </div>
+                                                <h5 class="text-white fw-bold mb-1" th:text="${rifa.tituloRifa}"></h5>
+                                                <p class="text-secondary small mb-0">
+                                                    Boletos Vendidos: <strong class="text-light" th:text="${rifa.boletosVendidos}"></strong> / <span th:text="${rifa.totalBoletos}"></span> 
+                                                    (<span th:text="${rifa.porcentajeVendido}"></span>%)
+                                                </p>
+                                            </div>
+
+                                            <div class="text-md-end border-top border-secondary pt-2 pt-md-0">
+                                                <div class="small text-secondary">Ingresos: <span class="text-success fw-bold">$<span th:text="${#numbers.formatDecimal(rifa.ingresosTotales, 1, 'COMMA', 2, 'POINT')}"></span></span></div>
+                                                <div class="small text-secondary">Utilidad Neta: <span class="text-warning fw-bold">$<span th:text="${#numbers.formatDecimal(rifa.utilidadNeta, 1, 'COMMA', 2, 'POINT')}"></span></span></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Sección exclusiva para rifas FINALIZADAS (Cálculo del 10% y Switch) -->
+                                        <div th:if="${rifa.estadoRifa == 'FINALIZADA'}" class="mt-3 pt-2 border-top border-secondary d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 seccion-finalizada">
+                                            <div>
+                                                <span class="small text-info fw-bold">💡 Comisión Sugerida (10%): </span>
+                                                <span class="text-info fw-bold">$<span class="monto-comision" th:text="${#numbers.formatDecimal(rifa.utilidadNeta * 0.10, 1, 'COMMA', 2, 'POINT')}"></span></span>
+                                            </div>
+                                            <div class="form-check form-switch ps-0 d-flex align-items-center gap-2">
+                                                <label class="form-check-label small text-secondary mb-0" th:for="${'switchCobro-' + rifa.idRifa}">¿Cobrado?</label>
+                                                <input class="form-check-input switch-cobro m-0" type="checkbox" role="switch" th:id="${'switchCobro-' + rifa.idRifa}" style="float: none;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PESTAÑA 3: Resumen de Comisiones -->
+                        <div class="tab-pane fade" id="comisiones-pane" role="tabpanel">
+                            <h5 class="text-secondary mb-3">Resumen General de Ingresos por Comisiones (10%)</h5>
+                            
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <div class="card bg-black bg-opacity-50 text-light border border-secondary p-3 h-100">
+                                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                                            <p class="text-secondary small mb-1">Total Cobrado a Administradores</p>
+                                            <h2 class="fw-bold text-success mb-0" id="resumenTotalCobrado">$0.00</h2>
+                                            <span class="text-secondary small mt-2">Comisiones ya marcadas como cobradas.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-black bg-opacity-50 text-light border border-secondary p-3 h-100">
+                                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                                            <p class="text-secondary small mb-1">Total Pendiente por Cobrar</p>
+                                            <h2 class="fw-bold text-warning mb-0" id="resumenTotalPendiente">$0.00</h2>
+                                            <span class="text-secondary small mt-2">Comisiones pendientes en rifas finalizadas.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Script de Filtrado, Búsqueda y Cálculo de Comisiones -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const inputBuscar = document.getElementById("inputBuscarRifa");
+            const selectFiltro = document.getElementById("selectFiltroEstado");
+            const itemsRifa = document.querySelectorAll(".item-rifa");
+            
+            const labelSumaPendiente = document.getElementById("labelSumaPendiente");
+            const resumenTotalCobrado = document.getElementById("resumenTotalCobrado");
+            const resumenTotalPendiente = document.getElementById("resumenTotalPendiente");
+
+            function formatearMoneda(monto) {
+                return "$" + monto.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            function actualizarTotalesComisiones() {
+                let sumaPendiente = 0;
+                let sumaCobrada = 0;
+
+                itemsRifa.forEach(item => {
+                    const seccionFin = item.querySelector(".seccion-finalizada");
+                    if (seccionFin) {
+                        const utilidad = parseFloat(item.getAttribute("data-utilidad")) || 0;
+                        const comision = utilidad * 0.10;
+                        const switchCobro = seccionFin.querySelector(".switch-cobro");
+
+                        if (switchCobro && switchCobro.checked) {
+                            sumaCobrada += comision;
+                        } else {
+                            sumaPendiente += comision;
+                        }
+                    }
+                });
+
+                labelSumaPendiente.textContent = formatearMoneda(sumaPendiente);
+                resumenTotalPendiente.textContent = formatearMoneda(sumaPendiente);
+                resumenTotalCobrado.textContent = formatearMoneda(sumaCobrada);
+            }
+
+            function filtrarRifas() {
+                const textoBusqueda = inputBuscar.value.toLowerCase().trim();
+                const estadoSeleccionado = selectFiltro.value;
+
+                itemsRifa.forEach(item => {
+                    const titulo = item.getAttribute("data-titulo");
+                    const id = String(item.getAttribute("data-id"));
+                    const estado = item.getAttribute("data-estado");
+
+                    const coincideTexto = titulo.includes(textoBusqueda) || id.includes(textoBusqueda);
+                    const coincideEstado = !estadoSeleccionado || estado === estadoSeleccionado;
+
+                    if (coincideTexto && coincideEstado) {
+                        item.style.display = "";
+                    } else {
+                        item.style.display = "none";
+                    }
+                });
+            }
+
+            // Eventos de filtrado
+            inputBuscar.addEventListener("input", filtrarRifas);
+            selectFiltro.addEventListener("change", filtrarRifas);
+
+            // Eventos de los switches de cobro
+            document.querySelectorAll(".switch-cobro").forEach(switchEl => {
+                switchEl.addEventListener("change", actualizarTotalesComisiones);
+            });
+
+            // Inicializar cálculos al cargar
+            actualizarTotalesComisiones();
+        });
+    </script>
+</body>
+
+</html>

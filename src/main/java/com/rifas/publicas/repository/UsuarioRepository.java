@@ -1,9 +1,12 @@
 package com.rifas.publicas.repository;
 import com.rifas.publicas.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
 import java.util.Optional;
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByEmail(String email);
     Optional<Usuario> findByToken(String token);
     Optional<Usuario> findByCodigoReferido(String codigoRef);
+    List<Usuario> findByEmailContainingIgnoreCase(String email);
 }

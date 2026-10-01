@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class AdminAnalisisService {
@@ -87,5 +89,54 @@ public class AdminAnalisisService {
         dto.setPorcentajeVendido(bdPorcentaje.doubleValue());
 
         return dto;
+    }
+
+    public Map<String, Object> obterAnalisisGlobal() {
+        // Recupera todas as rifas registradas na plataforma
+        List<Rifa> todasRifas = rifaRepository.findAll();
+
+        // Calcula as estatísticas (aproveitando o método auxiliar que você já possui)
+        return calcularEstadisticas(todasRifas);
+    }
+
+    private Map<String, Object> calcularEstadisticas(List<Rifa> rifas) {
+        long totalRifas = rifas.size();
+        long rifasActivas = rifas.stream().filter(r -> "ACTIVA".equalsIgnoreCase(r.getEstado())).count();
+        long rifasVencidas = rifas.stream().filter(r -> "VENCIDA".equalsIgnoreCase(r.getEstado())).count();
+
+        BigDecimal ingresosTotalesPlataforma = BigDecimal.ZERO;
+        BigDecimal utilidadTotalPlataforma = BigDecimal.ZERO;
+        int boletosVendidosTotales = 0;
+
+        // Se recorren las rifas utilizando el método existente para garantizar coherencia financiera
+        for (Rifa rifa : rifas) {
+            AnalisisDashboardDTO metricas = calcularMetricasRifa(rifa.getId());
+            ingresosTotalesPlataforma = ingresosTotalesPlataforma.add(metricas.getIngresosTotales());
+            utilidadTotalPlataforma = utilidadTotalPlataforma.add(metricas.getUtilidadNeta());
+            boletosVendidosTotales += metricas.getBoletosVendidos();
+        }
+
+        Map<String, Object> estadisticas = new HashMap<>();
+        estadisticas.put("totalRifas", totalRifas);
+        estadisticas.put("rifasActivas", rifasActivas);
+        estadisticas.put("rifasVencidas", rifasVencidas);
+        estadisticas.put("ingresosTotalesPlataforma", ingresosTotalesPlataforma);
+        estadisticas.put("utilidadTotalPlataforma", utilidadTotalPlataforma);
+        estadisticas.put("boletosVendidosTotales", boletosVendidosTotales);
+
+        return estadisticas;
+    }
+
+    public Map<String, Object> obtenerAnalisisGlobal() {
+        List<Rifa> todasLasRifas = rifaRepository.findAll();
+        Map<String, Object> estadisticas = calcularEstadisticas(todasLasRifas);
+
+        // Agregamos la lista detallada de cada rifa individual para el Super Admin
+        List<AnalisisDashboardDTO> detallesRifas = todasLasRifas.stream()
+                .map(r -> calcularMetricasRifa(r.getId()))
+                .toList();
+
+        estadisticas.put("detallesRifas", detallesRifas);
+        return estadisticas;
     }
 }

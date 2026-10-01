@@ -270,6 +270,15 @@
                         <span th:text="${#authentication.name}">Usuario</span>
                     </span>
                     
+                    <!-- Añadir donde tengas tus etiquetas <li> de navegación -->
+                    <li class="nav-item" sec:authorize="hasRole('SUPER_ADMIN')">
+                        <a class="nav-link text-warning fw-bold" href="/super-admin/analisis">🌐 Panel Global</a>
+                    </li>
+
+                    <li class="nav-item" sec:authorize="hasRole('SUPER_ADMIN')">
+                        <a class="nav-link text-warning fw-bold" href="/super-admin/usuarios">👥 Gestión de Roles</a>
+                    </li>
+                    
                     <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()')}">
                         <a class="nav-link text-light px-2" href="/mis-compras">
                             <i class="fa-solid fa-ticket me-1 text-warning"></i> Mis Boletos
